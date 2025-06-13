@@ -3,7 +3,7 @@
     /* The QuickJS supports ES2022 */
     "module": "ESNext",
     /* Use esbuild to bundle the code */
-    "moduleResolution": "Node",
+    "moduleResolution": "bundler",
     "target": "ES2022",
     "incremental": true,
     "allowJs": true,
