@@ -44,7 +44,7 @@ export function loadCkbPerPoint(): bigint {
   if (argsArray.length < 75) { // 67 + 8 bytes
     throw new Error(`Script args too short: expected at least 75 bytes, got ${argsArray.length}`);
   }
-  const ckbPerPointBytes = argsArray.slice(67, 75); // bytes 67-74 (8 bytes)
+  const ckbPerPointBytes = argsArray.slice(67, 75);
   return parseCkbPerPoint(ckbPerPointBytes);
 }
 

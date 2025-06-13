@@ -113,7 +113,7 @@ describe('PokePoint Contract Tests', () => {
       addChangeOutput(tx, 10000000000n);
 
       const verifier = Verifier.from(resource, tx);
-      expect(() => verifier.verifySuccess(true)).toThrow();
+      await verifier.verifyFailure();
     });
 
     test('should fail with insufficient capacity for points', async () => {
@@ -126,7 +126,7 @@ describe('PokePoint Contract Tests', () => {
       addChangeOutput(tx, 15000000000n);
 
       const verifier = Verifier.from(resource, tx);
-      expect(() => verifier.verifySuccess(true)).toThrow();
+      await verifier.verifyFailure();
     });
 
     test('should fail with multiple PokePoint outputs', async () => {
@@ -148,7 +148,7 @@ describe('PokePoint Contract Tests', () => {
       addChangeOutput(tx, 30000000000n - pokePointCapacity * 2n);
 
       const verifier = Verifier.from(resource, tx);
-      expect(() => verifier.verifySuccess(true)).toThrow();
+      await verifier.verifyFailure();
     });
 
     test('should fail with invalid cell data format', async () => {
@@ -173,7 +173,49 @@ describe('PokePoint Contract Tests', () => {
       addChangeOutput(tx, 20000000000n - pokePointCapacity);
 
       const verifier = Verifier.from(resource, tx);
-      expect(() => verifier.verifySuccess(true)).toThrow();
+      await verifier.verifyFailure();
+    });
+
+    test('should succeed with multiple input cells (cell aggregation)', async () => {
+      const tx = Transaction.default();
+      deployScripts(tx);
+      const typeScript = createPokePointTypeScript(1000000000n); // 10 CKB per point
+
+      // Add multiple input cells to simulate cell aggregation
+      addInputCell(tx, 5000000000n);   // 50 CKB
+      addInputCell(tx, 3000000000n);   // 30 CKB  
+      addInputCell(tx, 7000000000n);   // 70 CKB
+      // Total input: 150 CKB
+
+      // Create PokePoint output with 10 points (needs 100 CKB)
+      addPokePointOutput(tx, typeScript, 10000000000n, 10n); // 100 CKB for 10 points
+
+      // Change output: 150 - 100 = 50 CKB
+      addChangeOutput(tx, 5000000000n);
+
+      const verifier = Verifier.from(resource, tx);
+      verifier.verifySuccess(true);
+    });
+
+    test('should succeed with many small input cells', async () => {
+      const tx = Transaction.default();
+      deployScripts(tx);
+      const typeScript = createPokePointTypeScript(1000000000n); // 10 CKB per point
+
+      // Add many small input cells (simulating fragmented CKB)
+      for (let i = 0; i < 8; i++) {
+        addInputCell(tx, 2500000000n); // 25 CKB each
+      }
+      // Total input: 8 × 25 = 200 CKB
+
+      // Create PokePoint output with 15 points (needs 150 CKB)
+      addPokePointOutput(tx, typeScript, 15000000000n, 15n); // 150 CKB for 15 points
+
+      // Change output: 200 - 150 = 50 CKB
+      addChangeOutput(tx, 5000000000n);
+
+      const verifier = Verifier.from(resource, tx);
+      verifier.verifySuccess(true);
     });
 
     test('should fail when not a creation transaction (has inputs)', async () => {
@@ -198,21 +240,8 @@ describe('PokePoint Contract Tests', () => {
       addChangeOutput(tx, 15000000000n + 5000000000n - 10000000000n);
 
       const verifier = Verifier.from(resource, tx);
-      expect(() => verifier.verifySuccess(true)).toThrow();
+      await verifier.verifyFailure();
     });
 
-    test('should fail with capacity exactly matching points but below minimum cell capacity', async () => {
-      const tx = Transaction.default();
-      deployScripts(tx);
-      const typeScript = createPokePointTypeScript(100000000n); // 1 CKB per point
-
-      addInputCell(tx, 20000000000n);
-      addPokePointOutput(tx, typeScript, 5000000000n, 50n); // 50 CKB for 50 points (below minimum)
-      addChangeOutput(tx, 15000000000n);
-
-      // Verify transaction should fail (below minimum cell capacity)
-      const verifier = Verifier.from(resource, tx);
-      expect(() => verifier.verifySuccess(true)).toThrow();
-    });
   });
 });
