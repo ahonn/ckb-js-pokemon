@@ -29,7 +29,10 @@ export function parseCkbPerPoint(ckbPerPointBytes: Uint8Array): bigint {
     throw new Error(`Invalid ckbPerPoint length: expected 8, got ${ckbPerPointBytes.byteLength}`);
   }
   // Convert to ArrayBuffer for numFromBytes
-  const buffer = ckbPerPointBytes.buffer.slice(ckbPerPointBytes.byteOffset, ckbPerPointBytes.byteOffset + ckbPerPointBytes.byteLength);
+  const buffer = ckbPerPointBytes.buffer.slice(
+    ckbPerPointBytes.byteOffset,
+    ckbPerPointBytes.byteOffset + ckbPerPointBytes.byteLength,
+  );
   return numFromBytes(buffer);
 }
 
@@ -41,7 +44,7 @@ export function loadCkbPerPoint(): bigint {
   const script = HighLevel.loadScript();
   const argsArray = new Uint8Array(script.args);
 
-  if (argsArray.length < 75) { // 67 + 8 bytes
+  if (argsArray.length < 75) {
     throw new Error(`Script args too short: expected at least 75 bytes, got ${argsArray.length}`);
   }
   const ckbPerPointBytes = argsArray.slice(67, 75);
@@ -76,4 +79,73 @@ export function ensureOnlyOne(source: bindings.SourceType): void {
       throw error;
     }
   }
+}
+
+/**
+ * Transaction types
+ */
+export const TransactionType = {
+  MINT: 'mint',
+  TRANSFER: 'transfer',
+  BURN: 'burn',
+} as const;
+
+export type TransactionTypeValue = (typeof TransactionType)[keyof typeof TransactionType];
+
+/**
+ * Get the transaction type based on inputs and outputs
+ */
+export function getTransactionType(): TransactionTypeValue {
+  const hasInputs = !isCreationTransaction();
+  const hasOutputs = hasPokePointOutputs();
+
+  if (!hasInputs && hasOutputs) {
+    return TransactionType.MINT;
+  } else if (hasInputs && hasOutputs) {
+    return TransactionType.TRANSFER;
+  } else if (hasInputs && !hasOutputs) {
+    return TransactionType.BURN;
+  } else {
+    throw new Error('Invalid transaction: no PokePoint inputs or outputs');
+  }
+}
+
+/**
+ * Check if there are any PokePoint outputs
+ */
+function hasPokePointOutputs(): boolean {
+  try {
+    HighLevel.loadCellTypeHash(0, bindings.SOURCE_GROUP_OUTPUT);
+    return true;
+  } catch (error: any) {
+    if (error.errorCode === bindings.INDEX_OUT_OF_BOUND) {
+      return false;
+    } else {
+      throw error;
+    }
+  }
+}
+
+/**
+ * Calculate total amount of PokePoints from a source
+ */
+export function calculateTotalAmount(source: bindings.SourceType): bigint {
+  let total = 0n;
+  let index = 0;
+
+  while (true) {
+    try {
+      const amount = loadPokePointAmount(index, source);
+      total += amount;
+      index++;
+    } catch (error: any) {
+      if (error.errorCode === bindings.INDEX_OUT_OF_BOUND) {
+        break;
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  return total;
 }
