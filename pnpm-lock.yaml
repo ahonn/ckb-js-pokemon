@@ -54,6 +54,52 @@ importers:
         specifier: ^5.0.0
         version: 5.7.3
 
+  contracts/pokemon:
+    dependencies:
+      '@ckb-js-std/bindings':
+        specifier: ~1.0.0
+        version: 1.0.0
+      '@ckb-js-std/core':
+        specifier: ~1.0.0
+        version: 1.0.0
+      '@ckb-js-std/eslint-plugin':
+        specifier: ~1.0.0
+        version: 1.0.0(eslint@9.29.0)(typescript@5.7.3)
+      eslint:
+        specifier: ^9.27.0
+        version: 9.29.0
+    devDependencies:
+      '@ckb-ccc/core':
+        specifier: ~1.8.0
+        version: 1.8.1(typescript@5.7.3)
+      '@eslint/js':
+        specifier: ^9.0.0
+        version: 9.29.0
+      '@types/jest':
+        specifier: ~29.5.14
+        version: 29.5.14
+      '@types/node':
+        specifier: ~22.13.8
+        version: 22.13.17
+      '@typescript-eslint/parser':
+        specifier: ^8.0.0
+        version: 8.34.1(eslint@9.29.0)(typescript@5.7.3)
+      ckb-testtool:
+        specifier: ~1.0.0
+        version: 1.0.2(typescript@5.7.3)
+      esbuild:
+        specifier: ~0.25.0
+        version: 0.25.5
+      jest:
+        specifier: ~29.7.0
+        version: 29.7.0(@types/node@22.13.17)
+      ts-jest:
+        specifier: ~29.2.6
+        version: 29.2.6(@babel/core@7.27.4)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.27.4))(esbuild@0.25.5)(jest@29.7.0(@types/node@22.13.17))(typescript@5.7.3)
+      typescript:
+        specifier: ^5.0.0
+        version: 5.7.3
+
 packages:
 
   '@adraffy/ens-normalize@1.10.1':
