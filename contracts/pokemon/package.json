@@ -1,5 +1,5 @@
 {
-  "name": "pokemon-script",
+  "name": "contracts/pokemon-script",
   "version": "0.1.0",
   "description": "Pokemon NFT contract for CKB blockchain",
   "author": "your name",

@@ -1,10 +1,12 @@
 {
   "private": true,
   "scripts": {
-    "build": "pnpm -r run build",
-    "clean": "pnpm -r run clean",
-    "test": "pnpm -r run test",
-    "format": "pnpm -r run format"
+    "dev": "pnpm --filter app run dev",
+    "build": "pnpm --filter app run build",
+    "lint": "pnpm --filter app run lint",
+    "build:contracts": "pnpm --filter 'contracts/*' run build",
+    "clean:contracts": "pnpm --filter 'contracts/*' run clean",
+    "test:contracts": "pnpm --filter 'contracts/*' run test"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
