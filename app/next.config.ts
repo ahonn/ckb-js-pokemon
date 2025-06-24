@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    optimizePackageImports: ["@ckb-ccc/core", "@ckb-ccc/core/bundle"],
+  },
 };
 
 export default nextConfig;
