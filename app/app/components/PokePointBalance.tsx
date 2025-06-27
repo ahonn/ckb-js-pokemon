@@ -18,8 +18,8 @@ export default function PokePointBalance({ signer, client }: PokePointBalancePro
     
     setLoading(true);
     try {
-      const addressObj = await signer.getAddressObj();
-      const lockScript = addressObj.script;
+      const addressObjs = await signer.getAddressObjs();
+      const lockScript = addressObjs[0].script;
       const points = await fetchPokePointBalance(client, lockScript);
       setBalance(points);
     } catch (error) {

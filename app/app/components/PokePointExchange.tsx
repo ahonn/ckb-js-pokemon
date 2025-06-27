@@ -6,7 +6,7 @@ import { useApp } from "../context";
 import {
   CKB_PER_POINT,
   MIN_CELL_CAPACITY,
-  POKEPOINT_CELL_MIN_CAPACITY,
+  MIN_POINTS_FOR_CELL,
   createPokePointTypeScript,
   pointsToHex,
   calculatePointsFromCKB,
@@ -27,6 +27,11 @@ export function PokePointExchange() {
 
   const points = parsePoints(ckbAmount);
   const requiredCKB = calculateRequiredCKB(points);
+  
+  // Validation
+  const minCKBRequired = Number(MIN_POINTS_FOR_CELL * CKB_PER_POINT) / 100000000; // 200 CKB
+  const isValidAmount = ckbAmount && Number(ckbAmount) >= minCKBRequired;
+  const actualPoints = points < MIN_POINTS_FOR_CELL ? MIN_POINTS_FOR_CELL : points;
 
   const handleExchange = async () => {
     if (!signer || points === 0n) return;
@@ -39,8 +44,8 @@ export function PokePointExchange() {
       
       // Get user address and lock script using correct API
       const address = await signer.getInternalAddress();
-      const addressObj = await signer.getAddressObj();
-      const lockScript = addressObj.script;
+      const addressObjs = await signer.getAddressObjs();
+      const lockScript = addressObjs[0].script;
       console.log("User address:", address);
       console.log("Lock script:", lockScript);
       
@@ -72,12 +77,12 @@ export function PokePointExchange() {
       await tx.completeInputsByCapacity(signer);
 
       // Add PokePoint output
-      tx.outputs.push({
-        capacity: ccc.numToHex(requiredCKB),
+      tx.outputs.push(ccc.CellOutput.from({
+        capacity: requiredCKB,
         lock: lockScript,
-        type: pokePointTypeScript,
-      });
-      tx.outputsData.push(pointsToHex(points));
+        type: ccc.Script.from(pokePointTypeScript),
+      }));
+      tx.outputsData.push(pointsToHex(points) as `0x${string}`);
 
       // Complete fee
       await tx.completeFeeBy(signer);
@@ -110,17 +115,26 @@ export function PokePointExchange() {
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-2">
-            CKB Amount
+            CKB Amount (minimum {minCKBRequired} CKB)
           </label>
           <input
             type="number"
             value={ckbAmount}
             onChange={(e) => setCkbAmount(e.target.value)}
-            placeholder="Enter CKB amount"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            step="0.00000001"
-            min="0"
+            placeholder={`Enter CKB amount (min: ${minCKBRequired})`}
+            className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+              ckbAmount && !isValidAmount 
+                ? 'border-red-300 focus:ring-red-500' 
+                : 'border-gray-300 focus:ring-blue-500'
+            }`}
+            step="10"
+            min={minCKBRequired}
           />
+          {ckbAmount && !isValidAmount && (
+            <p className="text-red-500 text-sm mt-1">
+              Minimum {minCKBRequired} CKB required (20 PokePoints minimum)
+            </p>
+          )}
         </div>
 
         <div className="bg-gray-50 p-3 rounded-md">
@@ -130,8 +144,14 @@ export function PokePointExchange() {
           </div>
           <div className="flex justify-between text-sm mt-1">
             <span>You will receive:</span>
-            <span className="font-bold">{points.toString()} PokePoints</span>
+            <span className="font-bold">{actualPoints.toString()} PokePoints</span>
           </div>
+          {actualPoints > points && (
+            <div className="flex justify-between text-xs mt-1 text-orange-600">
+              <span>Actual minimum:</span>
+              <span>{actualPoints.toString()} PokePoints (20 min)</span>
+            </div>
+          )}
           <div className="flex justify-between text-sm mt-1">
             <span>Required CKB:</span>
             <span className="text-blue-600">{(Number(requiredCKB) / 100000000).toFixed(1)} CKB</span>
@@ -140,7 +160,7 @@ export function PokePointExchange() {
 
         <button
           onClick={handleExchange}
-          disabled={!signer || points === 0n || isExchanging}
+          disabled={!signer || !isValidAmount || isExchanging}
           className="w-full px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
         >
           {isExchanging ? "Exchanging..." : "Exchange to PokePoints"}

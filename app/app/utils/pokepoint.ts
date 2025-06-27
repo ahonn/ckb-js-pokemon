@@ -1,12 +1,12 @@
 import { ccc, HashType } from '@ckb-ccc/connector-react';
 
-// Constants from deployment information
+// Constants from deployment information (latest deployment with exact capacity validation)
 export const POKEPOINT_TYPE_ID =
   '0xee71850b11443115045505c2b30499e1744482438c726c21b483a6e11c40b1d6';
 export const POKEPOINT_TX_HASH =
-  '0xa518abeb17383007390875d5bee1926f1ee8682fe2ef8e4f903b3f326e7ac672';
+  '0x6c056e70b0b93474615233f97d027e8e231c7156eb997bc9b9daa9e14dac9100';
 export const POKEPOINT_DEP_GROUP_TX_HASH =
-  '0x7070e374417463427846ecff9d90f2399263163ff86b9c955745c138de4b3af4';
+  '0x8060221d8601996c84a0173e5aeb0d8ff462fc31bb806136e70c7edb8588f8b5';
 
 // CKB-JS-VM Constants (testnet deployment)
 export const CKB_JS_VM_CODE_HASH =
@@ -19,6 +19,7 @@ export const CKB_JS_VM_TX_HASH =
 export const CKB_PER_POINT = 1000000000n; // 10 CKB in Shannon
 export const MIN_CELL_CAPACITY = 6100000000n; // 61 CKB minimum
 export const POKEPOINT_CELL_MIN_CAPACITY = 20000000000n; // 200 CKB minimum for PokePoint cell
+export const MIN_POINTS_FOR_CELL = 20n; // Minimum 20 points to satisfy minimum capacity
 
 export interface PokePointTypeScriptConfig {
   targetLockHash: string;
@@ -73,29 +74,30 @@ export function calculatePointsFromCKB(ckbAmount: bigint): bigint {
 }
 
 export function calculateRequiredCKB(points: bigint): bigint {
-  // PokePoint cell needs more capacity to hold the type script and data
-  const pointsCost = points * CKB_PER_POINT;
-  return pointsCost > POKEPOINT_CELL_MIN_CAPACITY ? pointsCost : POKEPOINT_CELL_MIN_CAPACITY;
+  // With exact capacity validation, cell capacity must exactly match points cost
+  // Ensure minimum points to satisfy cell storage requirements
+  const actualPoints = points < MIN_POINTS_FOR_CELL ? MIN_POINTS_FOR_CELL : points;
+  return actualPoints * CKB_PER_POINT;
 }
 
 export function addPokePointCellDeps(tx: ccc.Transaction): void {
   // Add CKB-JS-VM cell dep
-  tx.cellDeps.push({
-    outPoint: {
+  tx.cellDeps.push(ccc.CellDep.from({
+    outPoint: ccc.OutPoint.from({
       txHash: CKB_JS_VM_TX_HASH,
       index: 0n,
-    },
+    }),
     depType: 'code',
-  });
+  }));
 
   // Add PokePoint contract cell dep
-  tx.cellDeps.push({
-    outPoint: {
+  tx.cellDeps.push(ccc.CellDep.from({
+    outPoint: ccc.OutPoint.from({
       txHash: POKEPOINT_DEP_GROUP_TX_HASH,
       index: 0n,
-    },
+    }),
     depType: 'depGroup',
-  });
+  }));
 }
 
 export function hexToPoints(hex: string): bigint {

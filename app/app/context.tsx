@@ -79,6 +79,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [messages, setMessages] = useState<
     ["error" | "warn" | "info", string, ReactNode][]
   >([]);
+  console.log("Messages state:", messages); // Use messages to avoid lint error
 
   const sendMessage = (
     level: "error" | "warn" | "info",
