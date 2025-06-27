@@ -25,14 +25,14 @@ describe('Pokemon Transfer Transaction Tests', () => {
     const pokePointTypeHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
     const typeScript = createPokemonTypeScript(issuerLockHash, pokePointTypeHash, context);
 
-    const pokemonPrice = 100n;
-    const pokemonPointAmount = 50n;
+    const pokemonId = 1n; // Bulbasaur
+    const pokemonPrice = 100;
 
     // Add input Pokemon cell (owned by original owner)
     const originalOwnerPokemonCell = context.resource.mockCell(
       createOwnerLockScript(context, '0x01'), // Original owner
       typeScript,
-      pokemonDataToBytes(Number(pokemonPrice), pokemonPointAmount),
+      pokemonDataToBytes(pokemonId, pokemonPrice),
       10000000000n,
     );
     tx.inputs.push(Resource.createCellInput(originalOwnerPokemonCell));
@@ -46,7 +46,7 @@ describe('Pokemon Transfer Transaction Tests', () => {
       10000000000n,
     );
     tx.outputs.push(newOwnerPokemonCell);
-    tx.outputsData.push(pokemonDataToBytes(Number(pokemonPrice), pokemonPointAmount));
+    tx.outputsData.push(pokemonDataToBytes(pokemonId, pokemonPrice));
 
     addChangeOutput(tx, 5000000000n, context);
 
@@ -62,13 +62,13 @@ describe('Pokemon Transfer Transaction Tests', () => {
     const pokePointTypeHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
     const typeScript = createPokemonTypeScript(issuerLockHash, pokePointTypeHash, context);
 
-    const pokemonPrice = 100n;
-    const pokemonPointAmount = 50n;
+    const pokemonId = 4n; // Charmander
+    const pokemonPrice = 100;
 
     const originalOwnerPokemonCell = context.resource.mockCell(
       createOwnerLockScript(context, '0x01'),
       typeScript,
-      pokemonDataToBytes(Number(pokemonPrice), pokemonPointAmount),
+      pokemonDataToBytes(pokemonId, pokemonPrice),
       10000000000n,
     );
     tx.inputs.push(Resource.createCellInput(originalOwnerPokemonCell));
@@ -81,8 +81,8 @@ describe('Pokemon Transfer Transaction Tests', () => {
       10000000000n,
     );
     tx.outputs.push(newOwnerPokemonCell);
-    // Modify Pokemon data during transfer (change price from 100 to 200)
-    tx.outputsData.push(pokemonDataToBytes(200, pokemonPointAmount));
+    // Modify Pokemon data during transfer (change pokemonId from 4 to 200, and price from 100 to 200)
+    tx.outputsData.push(pokemonDataToBytes(200n, 200));
 
     addChangeOutput(tx, 5000000000n, context);
 
@@ -90,7 +90,7 @@ describe('Pokemon Transfer Transaction Tests', () => {
     await verifier.verifyFailure();
   });
 
-  test('should fail when trying to modify Pokemon pointAmount during transfer', async () => {
+  test('should fail when trying to modify Pokemon ID during transfer', async () => {
     const tx = Transaction.default();
     deployScripts(tx, context);
 
@@ -98,13 +98,13 @@ describe('Pokemon Transfer Transaction Tests', () => {
     const pokePointTypeHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
     const typeScript = createPokemonTypeScript(issuerLockHash, pokePointTypeHash, context);
 
-    const pokemonPrice = 100n;
-    const pokemonPointAmount = 50n;
+    const pokemonId = 7n; // Squirtle
+    const pokemonPrice = 100;
 
     const originalOwnerPokemonCell = context.resource.mockCell(
       createOwnerLockScript(context, '0x01'),
       typeScript,
-      pokemonDataToBytes(Number(pokemonPrice), pokemonPointAmount),
+      pokemonDataToBytes(pokemonId, pokemonPrice),
       10000000000n,
     );
     tx.inputs.push(Resource.createCellInput(originalOwnerPokemonCell));
@@ -117,8 +117,8 @@ describe('Pokemon Transfer Transaction Tests', () => {
       10000000000n,
     );
     tx.outputs.push(newOwnerPokemonCell);
-    // Modify Pokemon data during transfer (change pointAmount from 50 to 100)
-    tx.outputsData.push(pokemonDataToBytes(Number(pokemonPrice), 100n));
+    // Modify Pokemon data during transfer (change pokemonId from 7 to 100)
+    tx.outputsData.push(pokemonDataToBytes(100n, pokemonPrice));
 
     addChangeOutput(tx, 5000000000n, context);
 
@@ -134,13 +134,13 @@ describe('Pokemon Transfer Transaction Tests', () => {
     const pokePointTypeHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
     const typeScript = createPokemonTypeScript(issuerLockHash, pokePointTypeHash, context);
 
-    const pokemonPrice = 100n;
-    const pokemonPointAmount = 50n;
+    const pokemonId = 133n; // Eevee
+    const pokemonPrice = 100;
 
     const originalOwnerPokemonCell = context.resource.mockCell(
       createOwnerLockScript(context, '0x01'),
       typeScript,
-      pokemonDataToBytes(Number(pokemonPrice), pokemonPointAmount),
+      pokemonDataToBytes(pokemonId, pokemonPrice),
       10000000000n,
     );
     tx.inputs.push(Resource.createCellInput(originalOwnerPokemonCell));
@@ -170,8 +170,8 @@ describe('Pokemon Transfer Transaction Tests', () => {
     const pokePointTypeHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
     const typeScript = createPokemonTypeScript(issuerLockHash, pokePointTypeHash, context);
 
-    const pokemonPrice = 100n;
-    const pokemonPointAmount = 50n;
+    const pokemonId = 151n; // Mew
+    const pokemonPrice = 100;
 
     const ownerLockScript = createOwnerLockScript(context, '0x01');
 
@@ -179,7 +179,7 @@ describe('Pokemon Transfer Transaction Tests', () => {
     const inputPokemonCell = context.resource.mockCell(
       ownerLockScript,
       typeScript,
-      pokemonDataToBytes(Number(pokemonPrice), pokemonPointAmount),
+      pokemonDataToBytes(pokemonId, pokemonPrice),
       10000000000n,
     );
     tx.inputs.push(Resource.createCellInput(inputPokemonCell));
@@ -192,7 +192,7 @@ describe('Pokemon Transfer Transaction Tests', () => {
       10000000000n,
     );
     tx.outputs.push(outputPokemonCell);
-    tx.outputsData.push(pokemonDataToBytes(Number(pokemonPrice), pokemonPointAmount));
+    tx.outputsData.push(pokemonDataToBytes(pokemonId, pokemonPrice));
 
     addChangeOutput(tx, 5000000000n, context);
 

@@ -30,10 +30,10 @@ describe('Pokemon Issue Transaction Tests', () => {
     // Add input with sufficient capacity
     addInputCell(tx, 20000000000n, context);
 
-    // Create Pokemon output with price=1000, point_amount=50
+    // Create Pokemon output with pokemonId=25 (Pikachu), price=1000
+    const pokemonId = 25n; // uint128 - Pikachu's ID
     const price = 1000; // uint16
-    const pointAmount = 50n; // uint128
-    addPokemonOutput(tx, typeScript, 10000000000n, price, pointAmount, context);
+    addPokemonOutput(tx, typeScript, 10000000000n, pokemonId, price, context);
 
     // Add change output
     addChangeOutput(tx, 10000000000n, context);
@@ -53,7 +53,7 @@ describe('Pokemon Issue Transaction Tests', () => {
     const typeScript = createPokemonTypeScript(differentIssuerLockHash, pokePointTypeHash, context);
 
     addInputCell(tx, 20000000000n, context);
-    addPokemonOutput(tx, typeScript, 10000000000n, 1000, 50n, context);
+    addPokemonOutput(tx, typeScript, 10000000000n, 6n, 1000, context); // Charizard
     addChangeOutput(tx, 10000000000n, context);
 
     const verifier = Verifier.from(context.resource, tx);
@@ -96,14 +96,14 @@ describe('Pokemon Issue Transaction Tests', () => {
     addInputCell(tx, 20000000000n, context);
 
     // Create Pokemon with price=0 (should fail)
-    addPokemonOutput(tx, typeScript, 10000000000n, 0, 50n, context);
+    addPokemonOutput(tx, typeScript, 10000000000n, 1n, 0, context); // Bulbasaur with 0 price
     addChangeOutput(tx, 10000000000n, context);
 
     const verifier = Verifier.from(context.resource, tx);
     await verifier.verifyFailure();
   });
 
-  test('should fail with zero point amount', async () => {
+  test('should fail with zero pokemon ID', async () => {
     const tx = Transaction.default();
     deployScripts(tx, context);
 
@@ -113,8 +113,8 @@ describe('Pokemon Issue Transaction Tests', () => {
 
     addInputCell(tx, 20000000000n, context);
 
-    // Create Pokemon with point_amount=0 (should fail)
-    addPokemonOutput(tx, typeScript, 10000000000n, 1000, 0n, context);
+    // Create Pokemon with pokemonId=0 (should fail)
+    addPokemonOutput(tx, typeScript, 10000000000n, 0n, 1000, context); // Invalid Pokemon ID
     addChangeOutput(tx, 10000000000n, context);
 
     const verifier = Verifier.from(context.resource, tx);

@@ -30,13 +30,13 @@ describe('Pokemon Purchase Transaction Tests', () => {
 
     const typeScript = createPokemonTypeScript(issuerLockHash, pokePointTypeHash, context);
 
-    const pokemonPrice = 100n;
-    const pokemonPointAmount = 50n;
+    const pokemonId = 25n; // Pikachu
+    const pokemonPrice = 100;
 
     const existingPokemonCell = context.resource.mockCell(
       context.alwaysSuccessScript,
       typeScript,
-      pokemonDataToBytes(Number(pokemonPrice), pokemonPointAmount),
+      pokemonDataToBytes(pokemonId, pokemonPrice),
       10000000000n,
     );
     tx.inputs.push(Resource.createCellInput(existingPokemonCell));
@@ -58,7 +58,7 @@ describe('Pokemon Purchase Transaction Tests', () => {
       10000000000n,
     );
     tx.outputs.push(buyerPokemonCell);
-    tx.outputsData.push(pokemonDataToBytes(Number(pokemonPrice), pokemonPointAmount));
+    tx.outputsData.push(pokemonDataToBytes(pokemonId, pokemonPrice));
 
     // No PokePoint output - all points are burned for the purchase
     addChangeOutput(tx, 15000000000n, context); // Increased change to account for no PokePoint output
@@ -79,13 +79,13 @@ describe('Pokemon Purchase Transaction Tests', () => {
 
     const typeScript = createPokemonTypeScript(issuerLockHash, pokePointTypeHash, context);
 
-    const pokemonPrice = 100n;
-    const pokemonPointAmount = 50n;
+    const pokemonId = 150n; // Mewtwo
+    const pokemonPrice = 100;
 
     const existingPokemonCell = context.resource.mockCell(
       context.alwaysSuccessScript,
       typeScript,
-      pokemonDataToBytes(Number(pokemonPrice), pokemonPointAmount),
+      pokemonDataToBytes(pokemonId, pokemonPrice),
       10000000000n,
     );
     tx.inputs.push(Resource.createCellInput(existingPokemonCell));
@@ -107,7 +107,7 @@ describe('Pokemon Purchase Transaction Tests', () => {
       10000000000n,
     );
     tx.outputs.push(buyerPokemonCell);
-    tx.outputsData.push(pokemonDataToBytes(Number(pokemonPrice), pokemonPointAmount));
+    tx.outputsData.push(pokemonDataToBytes(pokemonId, pokemonPrice));
 
     // No PokePoint output - all points are burned (including overpayment)
     addChangeOutput(tx, 20000000000n, context); // Increased change to account for no PokePoint output
@@ -128,13 +128,13 @@ describe('Pokemon Purchase Transaction Tests', () => {
 
     const typeScript = createPokemonTypeScript(issuerLockHash, pokePointTypeHash, context);
 
-    const pokemonPrice = 100n;
-    const pokemonPointAmount = 50n;
+    const pokemonId = 144n; // Articuno
+    const pokemonPrice = 100;
 
     const existingPokemonCell = context.resource.mockCell(
       context.alwaysSuccessScript,
       typeScript,
-      pokemonDataToBytes(Number(pokemonPrice), pokemonPointAmount),
+      pokemonDataToBytes(pokemonId, pokemonPrice),
       10000000000n,
     );
     tx.inputs.push(Resource.createCellInput(existingPokemonCell));
@@ -155,7 +155,7 @@ describe('Pokemon Purchase Transaction Tests', () => {
       10000000000n,
     );
     tx.outputs.push(buyerPokemonCell);
-    tx.outputsData.push(pokemonDataToBytes(Number(pokemonPrice), pokemonPointAmount));
+    tx.outputsData.push(pokemonDataToBytes(pokemonId, pokemonPrice));
 
     addChangeOutput(tx, 10000000000n, context);
 
@@ -176,14 +176,14 @@ describe('Pokemon Purchase Transaction Tests', () => {
     // Create Pokemon type script with the WRONG PokePoint type hash
     const typeScript = createPokemonTypeScript(issuerLockHash, wrongPokePointTypeHash, context);
 
-    const pokemonPrice = 100n;
-    const pokemonPointAmount = 50n;
+    const pokemonId = 6n; // Charizard
+    const pokemonPrice = 100;
 
     // Create Pokemon input from one owner
     const inputPokemonCell = context.resource.mockCell(
       createBuyerLockScript(context, '0x01'), // Owner 1
       typeScript,
-      pokemonDataToBytes(Number(pokemonPrice), pokemonPointAmount),
+      pokemonDataToBytes(pokemonId, pokemonPrice),
       10000000000n,
     );
     tx.inputs.push(Resource.createCellInput(inputPokemonCell));
@@ -207,7 +207,7 @@ describe('Pokemon Purchase Transaction Tests', () => {
       10000000000n,
     );
     tx.outputs.push(outputPokemonCell);
-    tx.outputsData.push(pokemonDataToBytes(Number(pokemonPrice), pokemonPointAmount));
+    tx.outputsData.push(pokemonDataToBytes(pokemonId, pokemonPrice));
 
     addChangeOutput(tx, 20000000000n, context);
 
@@ -228,13 +228,13 @@ describe('Pokemon Purchase Transaction Tests', () => {
 
     const typeScript = createPokemonTypeScript(issuerLockHash, pokePointTypeHash, context);
 
-    const pokemonPrice = 100n;
-    const pokemonPointAmount = 50n;
+    const pokemonId = 9n; // Blastoise
+    const pokemonPrice = 100;
 
     const existingPokemonCell = context.resource.mockCell(
       context.alwaysSuccessScript,
       typeScript,
-      pokemonDataToBytes(Number(pokemonPrice), pokemonPointAmount),
+      pokemonDataToBytes(pokemonId, pokemonPrice),
       10000000000n,
     );
     tx.inputs.push(Resource.createCellInput(existingPokemonCell));
@@ -255,8 +255,8 @@ describe('Pokemon Purchase Transaction Tests', () => {
       10000000000n,
     );
     tx.outputs.push(buyerPokemonCell);
-    // Modify Pokemon data during purchase (change price from 100 to 50)
-    tx.outputsData.push(pokemonDataToBytes(50, 100n));
+    // Modify Pokemon data during purchase (change pokemonId from 9 to 50, and price from 100 to 50)
+    tx.outputsData.push(pokemonDataToBytes(50n, 50));
 
     addChangeOutput(tx, 20000000000n, context);
 

@@ -14,16 +14,16 @@ export function validateTransferTransaction(): number {
   const outputPokemonData = loadPokemonData(0, bindings.SOURCE_GROUP_OUTPUT);
 
   log.debug(
-    `Input Pokemon - price: ${inputPokemonData.price}, pointAmount: ${inputPokemonData.pointAmount}`,
+    `Input Pokemon - pokemonId: ${inputPokemonData.pokemonId}, price: ${inputPokemonData.price}`,
   );
   log.debug(
-    `Output Pokemon - price: ${outputPokemonData.price}, pointAmount: ${outputPokemonData.pointAmount}`,
+    `Output Pokemon - pokemonId: ${outputPokemonData.pokemonId}, price: ${outputPokemonData.price}`,
   );
 
-  // Validate Pokemon data integrity (price and pointAmount must remain unchanged)
+  // Validate Pokemon data integrity (pokemonId and price must remain unchanged)
   if (
-    inputPokemonData.price !== outputPokemonData.price ||
-    inputPokemonData.pointAmount !== outputPokemonData.pointAmount
+    inputPokemonData.pokemonId !== outputPokemonData.pokemonId ||
+    inputPokemonData.price !== outputPokemonData.price
   ) {
     log.debug('Pokemon data has been modified during transfer');
     return 1;

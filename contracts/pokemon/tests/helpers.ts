@@ -21,17 +21,17 @@ export function createPokemonArgs(
 }
 
 /**
- * Convert Pokemon data (price + pointAmount) to bytes
+ * Convert Pokemon data (pokemonId + price) to bytes
  */
-export function pokemonDataToBytes(price: number, pointAmount: bigint): `0x${string}` {
-  // price as uint16 (2 bytes) + pointAmount as uint128 (16 bytes)
+export function pokemonDataToBytes(pokemonId: bigint, price: number): `0x${string}` {
+  // pokemonId as uint128 (16 bytes) + price as uint16 (2 bytes)
+  const pokemonIdBytes = numToBytes(pokemonId, 16);
   const priceBytes = numToBytes(BigInt(price), 2);
-  const pointAmountBytes = numToBytes(pointAmount, 16);
 
-  // Combine: price + pointAmount
+  // Combine: pokemonId + price
   const combined = new Uint8Array(18);
-  combined.set(new Uint8Array(priceBytes), 0);
-  combined.set(new Uint8Array(pointAmountBytes), 2);
+  combined.set(new Uint8Array(pokemonIdBytes), 0);
+  combined.set(new Uint8Array(priceBytes), 16);
 
   return hexFrom(combined);
 }
@@ -126,13 +126,13 @@ export function addPokemonOutput(
   tx: Transaction,
   typeScript: Script,
   capacity: bigint,
+  pokemonId: bigint,
   price: number,
-  pointAmount: bigint,
   context: TestContext,
 ): bigint {
   const pokemonCell = Resource.createCellOutput(context.alwaysSuccessScript, typeScript, capacity);
   tx.outputs.push(pokemonCell);
-  tx.outputsData.push(pokemonDataToBytes(price, pointAmount));
+  tx.outputsData.push(pokemonDataToBytes(pokemonId, price));
   return capacity;
 }
 

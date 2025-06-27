@@ -10,17 +10,17 @@ export function validateIssueTransaction(): number {
 
   // Load Pokemon data from the single output
   const pokemonData = loadPokemonData(0, bindings.SOURCE_GROUP_OUTPUT);
-  log.debug(`Pokemon data - price: ${pokemonData.price}, pointAmount: ${pokemonData.pointAmount}`);
+  log.debug(`Pokemon data - pokemonId: ${pokemonData.pokemonId}, price: ${pokemonData.price}`);
+
+  // Validate Pokemon ID is not zero
+  if (pokemonData.pokemonId === 0n) {
+    log.debug('Pokemon ID cannot be zero');
+    return 1;
+  }
 
   // Validate price is not zero
   if (pokemonData.price === 0n) {
     log.debug('Price cannot be zero');
-    return 1;
-  }
-
-  // Validate pointAmount is not zero
-  if (pokemonData.pointAmount === 0n) {
-    log.debug('Point amount cannot be zero');
     return 1;
   }
 

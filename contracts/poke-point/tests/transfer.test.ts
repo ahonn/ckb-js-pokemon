@@ -195,4 +195,46 @@ describe('Transfer Tests', () => {
     const verifier = Verifier.from(context.resource, tx);
     await verifier.verifyFailure();
   });
+
+  test('should fail when output has too many points for capacity (over-allocation)', async () => {
+    const tx = Transaction.default();
+    deployScripts(tx, context);
+    const typeScript = createPokePointTypeScript(1000000000n, context); // 10 CKB per point
+
+    // Create existing PokePoint cell as input (19 points)
+    const inputPokePointCell = context.resource.mockCell(
+      context.alwaysSuccessScript,
+      typeScript,
+      pointsToBytes(19n),
+      19000000000n, // 190 CKB
+    );
+    tx.inputs.push(Resource.createCellInput(inputPokePointCell));
+
+    // Create PokePoint output with 195 CKB capacity but 20 points (max should be 19)
+    addPokePointOutput(tx, typeScript, 19500000000n, 20n, context); // 195 CKB for 20 points - over-allocation
+
+    const verifier = Verifier.from(context.resource, tx);
+    await verifier.verifyFailure();
+  });
+
+  test('should succeed with maximum allowed points for capacity in transfer', async () => {
+    const tx = Transaction.default();
+    deployScripts(tx, context);
+    const typeScript = createPokePointTypeScript(1000000000n, context); // 10 CKB per point
+
+    // Create existing PokePoint cell as input (19 points)
+    const inputPokePointCell = context.resource.mockCell(
+      context.alwaysSuccessScript,
+      typeScript,
+      pointsToBytes(19n),
+      19000000000n, // 190 CKB
+    );
+    tx.inputs.push(Resource.createCellInput(inputPokePointCell));
+
+    // Create PokePoint output with 195 CKB capacity and exactly 19 points (max allowed)
+    addPokePointOutput(tx, typeScript, 19500000000n, 19n, context); // 195 CKB for 19 points - exactly at limit
+
+    const verifier = Verifier.from(context.resource, tx);
+    verifier.verifySuccess(true);
+  });
 });

@@ -170,4 +170,35 @@ describe('Minting Transaction Tests', () => {
     const verifier = Verifier.from(context.resource, tx);
     await verifier.verifyFailure();
   });
+
+  test('should fail with too many points for cell capacity (over-allocation)', async () => {
+    const tx = Transaction.default();
+    deployScripts(tx, context);
+    const typeScript = createPokePointTypeScript(1000000000n, context); // 10 CKB per point
+
+    addInputCell(tx, 25000000000n, context);
+    
+    // Cell has 195 CKB capacity, should only allow 19 points max (19.5 → 19)
+    // But trying to mint 20 points should fail
+    addPokePointOutput(tx, typeScript, 19500000000n, 20n, context); // 195 CKB capacity, 20 points
+    addChangeOutput(tx, 5500000000n, context);
+
+    const verifier = Verifier.from(context.resource, tx);
+    await verifier.verifyFailure();
+  });
+
+  test('should succeed with maximum allowed points for cell capacity', async () => {
+    const tx = Transaction.default();
+    deployScripts(tx, context);
+    const typeScript = createPokePointTypeScript(1000000000n, context); // 10 CKB per point
+
+    addInputCell(tx, 25000000000n, context);
+    
+    // Cell has 195 CKB capacity, should allow exactly 19 points (195 / 10 = 19.5 → 19)
+    addPokePointOutput(tx, typeScript, 19500000000n, 19n, context); // 195 CKB capacity, 19 points
+    addChangeOutput(tx, 5500000000n, context);
+
+    const verifier = Verifier.from(context.resource, tx);
+    verifier.verifySuccess(true);
+  });
 });

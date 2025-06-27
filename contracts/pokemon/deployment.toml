@@ -1,9 +1,9 @@
 [[cells]]
 name = "pokemon"
-enable_type_id = true 
+enable_type_id = true
 location = { file = "dist/index.bc" }
+force_redeploy = true
 
- 
 # Dep group cells
 [[dep_groups]]
 name = "pokemon_dep_group"

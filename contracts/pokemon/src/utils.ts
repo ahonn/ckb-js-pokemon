@@ -5,13 +5,13 @@ import { numFromBytes, HighLevel, log } from '@ckb-js-std/core';
  * Pokemon cell data structure
  */
 export interface PokemonData {
+  pokemonId: bigint; // uint128 (16 bytes)
   price: bigint; // uint16 (2 bytes)
-  pointAmount: bigint; // uint128 (16 bytes)
 }
 
 /**
- * Load Pokemon Cell's data (price + pointAmount)
- * Format: price(uint16, 2 bytes) + pointAmount(uint128, 16 bytes) = 18 bytes total
+ * Load Pokemon Cell's data (pokemonId + price)
+ * Format: pokemonId(uint128, 16 bytes) + price(uint16, 2 bytes) = 18 bytes total
  */
 export function loadPokemonData(index: number, source: bindings.SourceType): PokemonData {
   const data = bindings.loadCellData(index, source);
@@ -19,15 +19,15 @@ export function loadPokemonData(index: number, source: bindings.SourceType): Pok
     throw new Error(`Invalid Pokemon data length: expected 18, got ${data.byteLength}`);
   }
 
-  // Parse price (uint16, first 2 bytes)
-  const priceBuffer = data.slice(0, 2);
+  // Parse pokemonId (uint128, first 16 bytes)
+  const pokemonIdBuffer = data.slice(0, 16);
+  const pokemonId = numFromBytes(pokemonIdBuffer);
+
+  // Parse price (uint16, next 2 bytes)
+  const priceBuffer = data.slice(16, 18);
   const price = numFromBytes(priceBuffer);
 
-  // Parse pointAmount (uint128, next 16 bytes)
-  const pointAmountBuffer = data.slice(2, 18);
-  const pointAmount = numFromBytes(pointAmountBuffer);
-
-  return { price, pointAmount };
+  return { pokemonId, price };
 }
 
 /**
