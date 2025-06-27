@@ -37,22 +37,13 @@ export function validateTransferTransaction(): number {
       );
       const cellCapacity = new DataView(capacityData).getBigUint64(0, true);
 
-      // Validate capacity-to-points ratio
+      // Validate exact capacity-to-points ratio
       const requiredCapacity = amount * ckbPerPoint;
-      const maxAllowedPoints = cellCapacity / ckbPerPoint;
       
-      // Check minimum capacity requirement
-      if (cellCapacity < requiredCapacity) {
+      // Cell capacity must exactly match the required capacity for the points
+      if (cellCapacity !== requiredCapacity) {
         log.debug(
-          `Output ${outputIndex} has insufficient capacity: have ${cellCapacity}, need ${requiredCapacity}`,
-        );
-        return 1;
-      }
-      
-      // Check maximum points allowed by capacity (prevent over-allocation of points)
-      if (amount > maxAllowedPoints) {
-        log.debug(
-          `Output ${outputIndex} has too many points for capacity: have ${amount} points, max allowed ${maxAllowedPoints} points for capacity ${cellCapacity}`,
+          `Output ${outputIndex} capacity mismatch: have ${cellCapacity}, must be exactly ${requiredCapacity} for ${amount} points`,
         );
         return 1;
       }

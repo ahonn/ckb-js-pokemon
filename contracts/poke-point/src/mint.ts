@@ -29,19 +29,12 @@ export function validateMintTransaction(): number {
   const cellCapacity = new DataView(capacityData).getBigUint64(0, true);
   log.debug(`Cell capacity: ${cellCapacity}`);
 
-  // Validate capacity-to-points ratio
+  // Validate exact capacity-to-points ratio
   const requiredCapacity = amount * ckbPerPoint;
-  const maxAllowedPoints = cellCapacity / ckbPerPoint;
   
-  // Check minimum capacity requirement
-  if (cellCapacity < requiredCapacity) {
-    log.debug(`Insufficient capacity: have ${cellCapacity}, need ${requiredCapacity}`);
-    return 1;
-  }
-  
-  // Check maximum points allowed by capacity (prevent over-allocation of points)
-  if (amount > maxAllowedPoints) {
-    log.debug(`Too many points for capacity: have ${amount} points, max allowed ${maxAllowedPoints} points for capacity ${cellCapacity}`);
+  // Cell capacity must exactly match the required capacity for the points
+  if (cellCapacity !== requiredCapacity) {
+    log.debug(`Capacity mismatch: have ${cellCapacity}, must be exactly ${requiredCapacity} for ${amount} points`);
     return 1;
   }
 

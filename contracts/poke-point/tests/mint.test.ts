@@ -171,15 +171,14 @@ describe('Minting Transaction Tests', () => {
     await verifier.verifyFailure();
   });
 
-  test('should fail with too many points for cell capacity (over-allocation)', async () => {
+  test('should fail with mismatched capacity (195 CKB for 20 points)', async () => {
     const tx = Transaction.default();
     deployScripts(tx, context);
     const typeScript = createPokePointTypeScript(1000000000n, context); // 10 CKB per point
 
     addInputCell(tx, 25000000000n, context);
     
-    // Cell has 195 CKB capacity, should only allow 19 points max (19.5 → 19)
-    // But trying to mint 20 points should fail
+    // 195 CKB capacity with 20 points should fail (need exactly 200 CKB for 20 points)
     addPokePointOutput(tx, typeScript, 19500000000n, 20n, context); // 195 CKB capacity, 20 points
     addChangeOutput(tx, 5500000000n, context);
 
@@ -187,18 +186,33 @@ describe('Minting Transaction Tests', () => {
     await verifier.verifyFailure();
   });
 
-  test('should succeed with maximum allowed points for cell capacity', async () => {
+  test('should succeed with exact capacity match (190 CKB for 19 points)', async () => {
     const tx = Transaction.default();
     deployScripts(tx, context);
     const typeScript = createPokePointTypeScript(1000000000n, context); // 10 CKB per point
 
     addInputCell(tx, 25000000000n, context);
     
-    // Cell has 195 CKB capacity, should allow exactly 19 points (195 / 10 = 19.5 → 19)
+    // 190 CKB capacity with exactly 19 points should succeed
+    addPokePointOutput(tx, typeScript, 19000000000n, 19n, context); // 190 CKB capacity, 19 points
+    addChangeOutput(tx, 6000000000n, context);
+
+    const verifier = Verifier.from(context.resource, tx);
+    verifier.verifySuccess(true);
+  });
+
+  test('should fail with excess capacity (195 CKB for 19 points)', async () => {
+    const tx = Transaction.default();
+    deployScripts(tx, context);
+    const typeScript = createPokePointTypeScript(1000000000n, context); // 10 CKB per point
+
+    addInputCell(tx, 25000000000n, context);
+    
+    // 195 CKB capacity with 19 points should fail (need exactly 190 CKB for 19 points)
     addPokePointOutput(tx, typeScript, 19500000000n, 19n, context); // 195 CKB capacity, 19 points
     addChangeOutput(tx, 5500000000n, context);
 
     const verifier = Verifier.from(context.resource, tx);
-    verifier.verifySuccess(true);
+    await verifier.verifyFailure();
   });
 });

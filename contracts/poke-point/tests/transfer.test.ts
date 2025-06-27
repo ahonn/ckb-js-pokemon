@@ -196,7 +196,7 @@ describe('Transfer Tests', () => {
     await verifier.verifyFailure();
   });
 
-  test('should fail when output has too many points for capacity (over-allocation)', async () => {
+  test('should fail when output has mismatched capacity (195 CKB for 19 points)', async () => {
     const tx = Transaction.default();
     deployScripts(tx, context);
     const typeScript = createPokePointTypeScript(1000000000n, context); // 10 CKB per point
@@ -210,14 +210,14 @@ describe('Transfer Tests', () => {
     );
     tx.inputs.push(Resource.createCellInput(inputPokePointCell));
 
-    // Create PokePoint output with 195 CKB capacity but 20 points (max should be 19)
-    addPokePointOutput(tx, typeScript, 19500000000n, 20n, context); // 195 CKB for 20 points - over-allocation
+    // Create PokePoint output with 195 CKB capacity for 19 points (should be exactly 190 CKB)
+    addPokePointOutput(tx, typeScript, 19500000000n, 19n, context); // 195 CKB for 19 points - mismatch
 
     const verifier = Verifier.from(context.resource, tx);
     await verifier.verifyFailure();
   });
 
-  test('should succeed with maximum allowed points for capacity in transfer', async () => {
+  test('should succeed with exact capacity match in transfer', async () => {
     const tx = Transaction.default();
     deployScripts(tx, context);
     const typeScript = createPokePointTypeScript(1000000000n, context); // 10 CKB per point
@@ -231,8 +231,8 @@ describe('Transfer Tests', () => {
     );
     tx.inputs.push(Resource.createCellInput(inputPokePointCell));
 
-    // Create PokePoint output with 195 CKB capacity and exactly 19 points (max allowed)
-    addPokePointOutput(tx, typeScript, 19500000000n, 19n, context); // 195 CKB for 19 points - exactly at limit
+    // Create PokePoint output with exactly 190 CKB capacity for 19 points
+    addPokePointOutput(tx, typeScript, 19000000000n, 19n, context); // 190 CKB for 19 points - exact match
 
     const verifier = Verifier.from(context.resource, tx);
     verifier.verifySuccess(true);
