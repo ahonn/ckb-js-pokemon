@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ccc } from "@ckb-ccc/core";
 import Pokedex from "pokedex-promise-v2";
 
@@ -23,8 +23,8 @@ interface Pokemon {
 }
 
 interface PokemonShopProps {
-  signer: any;
-  client: any;
+  signer: ccc.Signer;
+  client: ccc.Client;
   onPurchase?: (pokemonId: number) => void;
 }
 
@@ -34,32 +34,27 @@ const CONFIG = {
   POKEMON_CODE_HASH: "0xaba2b6178730a3d543cc95f96f9fc669964e6b90fe100bccfca25db02b8b1caf",
   POKEMON_HASH_TYPE: 1,
   POKEPOINT_TYPE_HASH: "0xee71850b11443115045505c2b30499e1744482438c726c21b483a6e11c40b1d6",
-  
+
   // Issuer information from ckb-cli account #0
   ISSUER_LOCK_ARGS: "0xc13d8e949c0d6874a82ab2976ede9d036aa9a5e0",
   ISSUER_LOCK_HASH: "0x69884b9740d748e44bce826bd34ea70dc07bef8c9b4cd6ca246115348027ab0d",
   ISSUER_ADDRESS: "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqwp8k8ff8qddp62s24jjahda8grd256tcqn4sdmu",
 };
 
-export default function PokemonShop({ signer, client, onPurchase }: PokemonShopProps) {
+export default function PokemonShop({ client, onPurchase }: PokemonShopProps) {
   const [availablePokemon, setAvailablePokemon] = useState<Pokemon[]>([]);
-  const [pokemonImages, setPokemonImages] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState<number | null>(null);
 
   const pokedex = new Pokedex();
 
-  useEffect(() => {
-    loadAvailablePokemon();
-  }, []);
-
-  const loadAvailablePokemon = async () => {
+  const loadAvailablePokemon = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Query Pokemon NFTs from blockchain
       const pokemonCells = await queryPokemonCells();
-      
+
       // Load Pokemon data and images
       const pokemonWithImages = await Promise.all(
         pokemonCells.map(async (pokemon) => {
@@ -67,7 +62,7 @@ export default function PokemonShop({ signer, client, onPurchase }: PokemonShopP
             const pokemonData = await pokedex.getPokemonByName(pokemon.name);
             return {
               ...pokemon,
-              imageUrl: pokemonData.sprites.front_default || 
+              imageUrl: pokemonData.sprites.front_default ||
                        pokemonData.sprites.other?.['official-artwork']?.front_default
             };
           } catch (error) {
@@ -83,7 +78,11 @@ export default function PokemonShop({ signer, client, onPurchase }: PokemonShopP
     } finally {
       setLoading(false);
     }
-  };
+  }, [client]);
+
+  useEffect(() => {
+    loadAvailablePokemon();
+  }, [loadAvailablePokemon]);
 
   const queryPokemonCells = async (): Promise<Pokemon[]> => {
     try {
@@ -108,7 +107,7 @@ export default function PokemonShop({ signer, client, onPurchase }: PokemonShopP
       // Query cells with Pokemon type script
       const cells = [];
       let cellCount = 0;
-      
+
       for await (const cell of client.findCellsByType(pokemonTypeScript)) {
         cellCount++;
         console.log(`Found cell #${cellCount}:`, {
@@ -119,11 +118,11 @@ export default function PokemonShop({ signer, client, onPurchase }: PokemonShopP
           outputData: cell.outputData,
           capacity: cell.cellOutput.capacity.toString()
         });
-        
+
         // Check if cell is owned by issuer (compare lock args)
         if (cell.cellOutput.lock.args === CONFIG.ISSUER_LOCK_ARGS) {
           console.log("✅ Cell owned by issuer - decoding Pokemon data...");
-          
+
           // Decode Pokemon data from cell
           const pokemon = decodePokemonData(cell.outputData);
           if (pokemon) {
@@ -143,12 +142,12 @@ export default function PokemonShop({ signer, client, onPurchase }: PokemonShopP
       console.log(`=== Query Results ===`);
       console.log(`Total cells found: ${cellCount}`);
       console.log(`Pokemon owned by issuer: ${cells.length}`);
-      
+
       return cells;
     } catch (error) {
       console.error("Failed to query Pokemon cells:", error);
       console.error("Error details:", error);
-      
+
       return [];
     }
   };
@@ -170,7 +169,7 @@ export default function PokemonShop({ signer, client, onPurchase }: PokemonShopP
   const decodePokemonData = (data: string): Pokemon | null => {
     try {
       if (!data || data === '0x') return null;
-      
+
       const bytes = ccc.bytesFrom(data);
       if (bytes.length < 18) return null;
 
@@ -220,20 +219,20 @@ export default function PokemonShop({ signer, client, onPurchase }: PokemonShopP
   const handlePurchase = async (pokemon: Pokemon) => {
     try {
       setPurchasing(pokemon.id);
-      
+
       // TODO: Implement actual purchase transaction
       console.log(`Purchasing ${pokemon.name} for ${pokemon.price} PokePoints`);
-      
+
       // Simulate purchase delay
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       if (onPurchase) {
         onPurchase(pokemon.id);
       }
-      
+
       // Refresh available Pokemon after purchase
       await loadAvailablePokemon();
-      
+
     } catch (error) {
       console.error("Purchase failed:", error);
     } finally {
@@ -265,7 +264,7 @@ export default function PokemonShop({ signer, client, onPurchase }: PokemonShopP
       <p className="text-gray-600 mb-6">
         Purchase Pokemon NFTs with your PokePoints
       </p>
-      
+
       {availablePokemon.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">🔍</div>
@@ -276,7 +275,7 @@ export default function PokemonShop({ signer, client, onPurchase }: PokemonShopP
           <p className="text-sm text-gray-400 mb-6">
             Pokemon need to be issued first using the issue-pokemon.js script.
           </p>
-          <button 
+          <button
             onClick={loadAvailablePokemon}
             className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
@@ -286,7 +285,7 @@ export default function PokemonShop({ signer, client, onPurchase }: PokemonShopP
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {availablePokemon.map((pokemon) => (
-            <PokemonCard 
+            <PokemonCard
               key={pokemon.id}
               pokemon={pokemon}
               onPurchase={handlePurchase}
@@ -336,9 +335,9 @@ function PokemonCard({ pokemon, onPurchase, purchasing }: PokemonCardProps) {
           </div>
         )}
       </div>
-      
+
       <h3 className="font-semibold text-lg capitalize mb-2">{pokemon.name}</h3>
-      
+
       <div className="text-sm text-gray-600 mb-3">
         <div className="flex justify-between">
           <span>ID: #{pokemon.id}</span>
@@ -346,7 +345,7 @@ function PokemonCard({ pokemon, onPurchase, purchasing }: PokemonCardProps) {
         </div>
         <div className="flex gap-1 mt-1">
           {pokemon.types.map((type) => (
-            <span 
+            <span
               key={type}
               className="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs"
             >
@@ -355,7 +354,7 @@ function PokemonCard({ pokemon, onPurchase, purchasing }: PokemonCardProps) {
           ))}
         </div>
       </div>
-      
+
       <div className="flex items-center justify-between">
         <span className="font-bold text-lg text-green-600">
           {pokemon.price} PP
