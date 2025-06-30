@@ -15,11 +15,11 @@ const CONFIG = {
   CKB_JS_VM_HASH_TYPE: 'type',
   CKB_JS_VM_TX_HASH: '0x9f6558e91efa7580bfe97830d11cd94ca5d614bbf4a10b36f3a5b9d092749353',
 
-  // Pokemon contract deployment info (updated for batch issuance)
+  // Pokemon contract deployment info (updated with burn functionality)
   POKEMON_CODE_HASH: '0xaba2b6178730a3d543cc95f96f9fc669964e6b90fe100bccfca25db02b8b1caf',
   POKEMON_HASH_TYPE: 1, // "type" = 1
-  POKEMON_TX_HASH: '0x96d5428a2615725562d3f43fd5eb181191a8fc12cb68ee42a3c36665972388d7',
-  POKEMON_DEP_GROUP_TX_HASH: '0xeb50b685359c1db0116ccf3b71aa8b871b62a4bc4ba3c03dfe36a0ce3ce197fc',
+  POKEMON_TX_HASH: '0x1d3b9a0ed15bb9e6ac87a6f2c13ed25613ab28dab57392b46a2b77d9ccd469c1',
+  POKEMON_DEP_GROUP_TX_HASH: '0x98962ccb7800483c780a86897c072df2f22cd526e701fd9e4465edd674e71464',
 
   // PokePoint type hash (required in Pokemon args)
   POKEPOINT_TYPE_HASH: '0xee71850b11443115045505c2b30499e1744482438c726c21b483a6e11c40b1d6',

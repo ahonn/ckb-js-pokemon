@@ -176,9 +176,9 @@ export default function PokemonShop({ signer, client, onPurchase }: PokemonShopP
 
       console.log("Decoding Pokemon data:", data);
 
-      // Use CCC's numFrom with specific byte slices
-      const pokemonId = Number(ccc.numFrom(bytes.slice(0, 4))); // First 4 bytes for ID
-      const price = Number(ccc.numFrom(bytes.slice(16, 18)));    // Bytes 16-17 for price
+      // Manual little-endian decoding (most reliable)
+      const pokemonId = bytes[0] + (bytes[1] << 8) + (bytes[2] << 16) + (bytes[3] << 24);
+      const price = bytes[16] + (bytes[17] << 8);
 
       console.log("Decoded Pokemon ID:", pokemonId);
       console.log("Decoded price:", price);

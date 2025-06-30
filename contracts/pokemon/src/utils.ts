@@ -71,6 +71,7 @@ export const TransactionType = {
   ISSUE: 'issue',
   PURCHASE: 'purchase',
   TRANSFER: 'transfer',
+  BURN: 'burn',
 } as const;
 
 export type TransactionTypeValue = (typeof TransactionType)[keyof typeof TransactionType];
@@ -114,6 +115,8 @@ export function getTransactionType(): TransactionTypeValue {
   const hasInputs = !isCreationTransaction();
   const hasOutputs = hasPokemonOutputs();
 
+  log.debug(`hasInputs: ${hasInputs}, hasOutputs: ${hasOutputs}`);
+
   if (!hasInputs && hasOutputs) {
     return TransactionType.ISSUE;
   } else if (hasInputs && hasOutputs) {
@@ -123,6 +126,9 @@ export function getTransactionType(): TransactionTypeValue {
     } else {
       return TransactionType.TRANSFER;
     }
+  } else if (hasInputs && !hasOutputs) {
+    // Pokemon inputs but no Pokemon outputs = BURN (converted to regular cells)
+    return TransactionType.BURN;
   } else {
     throw new Error('Invalid transaction: no Pokemon inputs or outputs');
   }

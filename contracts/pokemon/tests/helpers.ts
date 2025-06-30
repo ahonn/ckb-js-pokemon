@@ -137,6 +137,28 @@ export function addPokemonOutput(
 }
 
 /**
+ * Add Pokemon input cell for burn testing
+ */
+export function addPokemonInput(
+  tx: Transaction,
+  typeScript: Script,
+  capacity: bigint,
+  pokemonId: bigint,
+  price: number,
+  context: TestContext,
+): bigint {
+  const pokemonCell = context.resource.mockCell(
+    context.alwaysSuccessScript,
+    typeScript,
+    pokemonDataToBytes(pokemonId, price),
+    capacity,
+  );
+  tx.inputs.push(Resource.createCellInput(pokemonCell));
+  tx.witnesses.push('0x');
+  return capacity;
+}
+
+/**
  * Add change output cell
  */
 export function addChangeOutput(tx: Transaction, changeCapacity: bigint, context: TestContext) {

@@ -4,6 +4,7 @@ import { getTransactionType, TransactionType } from './utils';
 import { validateIssueTransaction } from './issue';
 import { validatePurchaseTransaction } from './purchase';
 import { validateTransferTransaction } from './transfer';
+import { validateBurnTransaction } from './burn';
 
 log.setLevel(log.LogLevel.Debug);
 
@@ -21,6 +22,8 @@ function main(): number {
         return validatePurchaseTransaction();
       case TransactionType.TRANSFER:
         return validateTransferTransaction();
+      case TransactionType.BURN:
+        return validateBurnTransaction();
       default:
         log.debug(`Unknown transaction type: ${transactionType}`);
         return 1;

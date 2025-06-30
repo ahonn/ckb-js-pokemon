@@ -1,0 +1,14 @@
+[[cells]]
+name = "pokemon"
+enable_type_id = true
+location = { file = "dist/index.bc" }
+force_redeploy = true
+
+[[dep_groups]]
+name = "pokemon_dep_group"
+cells = ["pokemon"]
+
+[lock]
+code_hash = "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8"
+hash_type = "type"
+args = "0xc13d8e949c0d6874a82ab2976ede9d036aa9a5e0"
