@@ -1,4 +1,18 @@
-This is an on-chain script project powered by [ckb-js-vm](https://github.com/nervosnetwork/ckb-js-vm) bootstrapped with [`create-ckb-js-vm-app`](https://github.com/nervosnetwork/ckb-js-vm).
+# CKB-JS Pokemon
+
+A blockchain-based Pokemon NFT gaming application built on the CKB (Nervos Network) blockchain.
+
+## Pokemon Pricing
+
+Pokemon prices are calculated based on their total base stats (HP + Attack + Defense + Special Attack + Special Defense + Speed):
+
+| Tier | Base Stats | Price | Examples |
+|------|------------|-------|----------|
+| Legendary | > 600 | 5000 PokePoints | Mewtwo, Lugia, Ho-Oh |
+| High | 501-600 | 3000 PokePoints | Venusaur, Charizard, Blastoise |
+| Mid | 401-500 | 2000 PokePoints | Ivysaur, Charmeleon, Wartortle |
+| Low-Mid | 301-400 | 1500 PokePoints | Bulbasaur, Charmander, Squirtle |
+| Base | ≤ 300 | 1000 PokePoints | Caterpie, Weedle, Magikarp |
 
 ## Getting Started
 

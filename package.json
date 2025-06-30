@@ -1,12 +1,17 @@
 {
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "pnpm --filter app run dev",
     "build": "pnpm --filter app run build",
     "lint": "pnpm --filter app run lint",
     "build:contracts": "pnpm --filter 'contracts/*' run build",
     "clean:contracts": "pnpm --filter 'contracts/*' run clean",
-    "test:contracts": "pnpm --filter 'contracts/*' run test"
+    "test:contracts": "pnpm --filter 'contracts/*' run test",
+    "issue-pokemon": "node scripts/issue-pokemon.js"
+  },
+  "dependencies": {
+    "@ckb-ccc/core": "^1.8.1"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

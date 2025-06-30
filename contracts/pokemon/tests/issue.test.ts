@@ -120,4 +120,47 @@ describe('Pokemon Issue Transaction Tests', () => {
     const verifier = Verifier.from(context.resource, tx);
     await verifier.verifyFailure();
   });
+
+  test('should succeed when issuer creates multiple Pokemon with valid data (batch issuance)', async () => {
+    const tx = Transaction.default();
+    deployScripts(tx, context);
+
+    const issuerLockHash = context.alwaysSuccessScript.hash();
+    const pokePointTypeHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
+    const typeScript = createPokemonTypeScript(issuerLockHash, pokePointTypeHash, context);
+
+    // Add input with sufficient capacity for multiple Pokemon
+    addInputCell(tx, 50000000000n, context);
+
+    // Create multiple Pokemon outputs
+    addPokemonOutput(tx, typeScript, 10000000000n, 1n, 1500, context); // Bulbasaur
+    addPokemonOutput(tx, typeScript, 10000000000n, 4n, 1500, context); // Charmander  
+    addPokemonOutput(tx, typeScript, 10000000000n, 7n, 1500, context); // Squirtle
+
+    // Add change output
+    addChangeOutput(tx, 20000000000n, context);
+
+    const verifier = Verifier.from(context.resource, tx);
+    verifier.verifySuccess(true);
+  });
+
+  test('should fail when issuer creates multiple Pokemon with duplicate IDs', async () => {
+    const tx = Transaction.default();
+    deployScripts(tx, context);
+
+    const issuerLockHash = context.alwaysSuccessScript.hash();
+    const pokePointTypeHash = '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef';
+    const typeScript = createPokemonTypeScript(issuerLockHash, pokePointTypeHash, context);
+
+    addInputCell(tx, 40000000000n, context);
+
+    // Create Pokemon outputs with duplicate IDs (should fail)
+    addPokemonOutput(tx, typeScript, 10000000000n, 25n, 1000, context); // Pikachu
+    addPokemonOutput(tx, typeScript, 10000000000n, 25n, 1500, context); // Duplicate Pikachu
+
+    addChangeOutput(tx, 20000000000n, context);
+
+    const verifier = Verifier.from(context.resource, tx);
+    await verifier.verifyFailure();
+  });
 });

@@ -3,6 +3,7 @@
 import { ReactNode } from "react";
 import { ccc } from "@ckb-ccc/connector-react";
 import { AppProvider } from "../context";
+import { Navigation } from "./Navigation";
 
 export function LayoutProvider({ children }: { children: ReactNode }) {
   return (
@@ -20,7 +21,8 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
     >
       <AppProvider>
         <div className="flex h-dvh flex-col">
-          <main className="relative flex grow flex-col items-center justify-around overflow-y-scroll pb-4 pt-8">
+          <Navigation />
+          <main className="relative flex grow flex-col items-center justify-around overflow-y-scroll pb-4">
             <div className="flex w-full grow flex-col items-center justify-center">
               {children}
             </div>

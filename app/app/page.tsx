@@ -31,6 +31,16 @@ export default function Home() {
               </p>
             </div>
           </div>
+          
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-bold mb-4">Pokemon Management</h2>
+            <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+              <h3 className="font-semibold text-gray-400 mb-2">Pokemon Features (Coming Soon)</h3>
+              <p className="text-sm text-gray-500">
+                Create, transfer, trade, and manage your Pokemon NFT collection on the CKB blockchain.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     );

@@ -5,28 +5,8 @@ import { loadPokemonData, loadIssuerLockHash, ensureOnlyOne } from './utils';
 export function validateIssueTransaction(): number {
   log.debug('Validating issue transaction');
 
-  // Ensure only one Pokemon output
-  ensureOnlyOne(bindings.SOURCE_GROUP_OUTPUT);
-
-  // Load Pokemon data from the single output
-  const pokemonData = loadPokemonData(0, bindings.SOURCE_GROUP_OUTPUT);
-  log.debug(`Pokemon data - pokemonId: ${pokemonData.pokemonId}, price: ${pokemonData.price}`);
-
-  // Validate Pokemon ID is not zero
-  if (pokemonData.pokemonId === 0n) {
-    log.debug('Pokemon ID cannot be zero');
-    return 1;
-  }
-
-  // Validate price is not zero
-  if (pokemonData.price === 0n) {
-    log.debug('Price cannot be zero');
-    return 1;
-  }
-
-  // Validate issuer authorization
+  // Validate issuer authorization first
   const expectedIssuerLockHash = loadIssuerLockHash();
-  // Get the lock script code hash of the transaction input
   const actualIssuerLockHash = getInputLockCodeHash();
 
   log.debug(`Expected issuer lock hash length: ${expectedIssuerLockHash.length}`);
@@ -38,7 +18,54 @@ export function validateIssueTransaction(): number {
     return 1;
   }
 
-  log.debug('Issue transaction validation successful');
+  // Validate all Pokemon outputs (support batch issuance)
+  let outputIndex = 0;
+  const usedPokemonIds = new Set<bigint>();
+
+  while (true) {
+    try {
+      // Try to load Pokemon data from each output
+      const pokemonData = loadPokemonData(outputIndex, bindings.SOURCE_GROUP_OUTPUT);
+      log.debug(`Pokemon data - index: ${outputIndex}, pokemonId: ${pokemonData.pokemonId}, price: ${pokemonData.price}`);
+
+      // Validate Pokemon ID is not zero
+      if (pokemonData.pokemonId === 0n) {
+        log.debug(`Pokemon ID cannot be zero at output ${outputIndex}`);
+        return 1;
+      }
+
+      // Validate price is not zero
+      if (pokemonData.price === 0n) {
+        log.debug(`Price cannot be zero at output ${outputIndex}`);
+        return 1;
+      }
+
+      // Validate Pokemon ID is unique in this transaction
+      if (usedPokemonIds.has(pokemonData.pokemonId)) {
+        log.debug(`Duplicate Pokemon ID ${pokemonData.pokemonId} at output ${outputIndex}`);
+        return 1;
+      }
+      usedPokemonIds.add(pokemonData.pokemonId);
+
+      outputIndex++;
+    } catch (error: any) {
+      if (error.errorCode === bindings.INDEX_OUT_OF_BOUND) {
+        // No more outputs to process
+        break;
+      } else {
+        // Other error, propagate it
+        throw error;
+      }
+    }
+  }
+
+  // Ensure we have at least one Pokemon output
+  if (outputIndex === 0) {
+    log.debug('No Pokemon outputs found');
+    return 1;
+  }
+
+  log.debug(`Issue transaction validation successful - processed ${outputIndex} Pokemon outputs`);
   return 0;
 }
 
