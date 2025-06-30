@@ -4,6 +4,7 @@ import { ccc } from "@ckb-ccc/connector-react";
 import { useApp } from "./context";
 import { PokePointExchange } from "./components/PokePointExchange";
 import PokePointBalance from "./components/PokePointBalance";
+import PokemonShop from "./components/PokemonShop";
 
 export default function Home() {
   const { signer } = useApp();
@@ -23,24 +24,9 @@ export default function Home() {
           
           <div className="grid gap-6 md:grid-cols-2 w-full">
             <PokePointExchange />
-            
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-bold mb-4">Pokemon Collection</h2>
-              <p className="text-gray-500 text-center py-8">
-                Coming soon! Purchase Pokemon NFTs with your PokePoints.
-              </p>
-            </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-xl font-bold mb-4">Pokemon Management</h2>
-            <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-              <h3 className="font-semibold text-gray-400 mb-2">Pokemon Features (Coming Soon)</h3>
-              <p className="text-sm text-gray-500">
-                Create, transfer, trade, and manage your Pokemon NFT collection on the CKB blockchain.
-              </p>
-            </div>
-          </div>
+          <PokemonShop signer={signer} client={client} />
         </div>
       </div>
     );
