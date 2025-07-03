@@ -14,7 +14,11 @@ import {
   addPokePointCellDeps,
 } from "../utils/pokepoint";
 
-export function PokePointExchange() {
+interface PokePointExchangeProps {
+  onSuccess?: () => void;
+}
+
+export function PokePointExchange({ onSuccess }: PokePointExchangeProps) {
   const { signer, sendMessage } = useApp();
   const [ckbAmount, setCkbAmount] = useState("");
   const [isExchanging, setIsExchanging] = useState(false);
@@ -98,6 +102,11 @@ export function PokePointExchange() {
       ]);
 
       setCkbAmount("");
+      
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
       console.error("Exchange error:", error);
       sendMessage("error", "Exchange Failed", [
@@ -109,7 +118,7 @@ export function PokePointExchange() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 w-full max-w-md">
+    <div className="w-full">
       <h2 className="text-xl font-bold mb-4">Exchange CKB to PokePoints</h2>
       
       <div className="space-y-4">
