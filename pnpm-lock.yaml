@@ -17,6 +17,9 @@ importers:
       '@ckb-ccc/connector-react':
         specifier: ^1.0.18
         version: 1.0.18(@types/react@18.3.23)(react@18.3.1)(typescript@5.7.3)
+      '@next/eslint-plugin-next':
+        specifier: ^15.3.4
+        version: 15.3.4
       lucide-react:
         specifier: ^0.523.0
         version: 0.523.0(react@18.3.1)
@@ -54,6 +57,9 @@ importers:
       eslint-config-next:
         specifier: 15.3.4
         version: 15.3.4(eslint@9.29.0(jiti@2.4.2))(typescript@5.7.3)
+      eslint-plugin-react-hooks:
+        specifier: ^5.2.0
+        version: 5.2.0(eslint@9.29.0(jiti@2.4.2))
       tailwindcss:
         specifier: ^4
         version: 4.1.11

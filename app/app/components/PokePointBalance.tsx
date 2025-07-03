@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ccc } from "@ckb-ccc/connector-react";
 import { fetchPokePointBalance } from "../utils/pokepoint";
 
@@ -13,7 +13,7 @@ export default function PokePointBalance({ signer, client }: PokePointBalancePro
   const [balance, setBalance] = useState<bigint>(0n);
   const [loading, setLoading] = useState(false);
 
-  const loadBalance = async () => {
+  const loadBalance = useCallback(async () => {
     if (!signer) return;
     
     setLoading(true);
@@ -27,11 +27,11 @@ export default function PokePointBalance({ signer, client }: PokePointBalancePro
     } finally {
       setLoading(false);
     }
-  };
+  }, [signer, client]);
 
   useEffect(() => {
     loadBalance();
-  }, [signer]);
+  }, [signer, loadBalance]);
 
   if (!signer) {
     return null;

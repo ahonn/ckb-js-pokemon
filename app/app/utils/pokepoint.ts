@@ -102,7 +102,8 @@ export function addPokePointCellDeps(tx: ccc.Transaction): void {
 
 export function hexToPoints(hex: string): bigint {
   // Convert 16-byte (uint128) hex string in little endian to points
-  if (!hex.startsWith('0x') || hex.length !== 34) {
+  // Cell data can be longer than 16 bytes, we only need the first 16 bytes
+  if (!hex.startsWith('0x') || hex.length < 34) {
     return 0n;
   }
 
@@ -134,24 +135,43 @@ export async function fetchPokePointBalance(
       ckbPerPoint: CKB_PER_POINT,
     });
 
-    // Find cells with this type script and lock script
-    const cells = client.findCells({
-      script: typeScript,
-      scriptType: 'type',
-      scriptSearchMode: 'exact',
-      filter: {
-        script: lockScript,
-      },
-    });
-
+    // Find cells with this type script and lock script using pagination
     let totalPoints = 0n;
+    let after: string | undefined;
 
-    for await (const cell of cells) {
-      if (cell.cellOutput.type && cell.outputData) {
-        // Parse the points from the cell data (16-byte uint128 in little endian)
-        const points = hexToPoints(cell.outputData);
-        totalPoints += points;
+    // Iterate through all pages until no more data
+    while (true) {
+      const result = await client.findCellsPaged(
+        {
+          script: typeScript,
+          scriptType: 'type',
+          scriptSearchMode: 'exact',
+          filter: {
+            script: lockScript,
+          },
+        },
+        'asc', // order
+        '0x64', // limit: 100 cells per page
+        after // after cursor
+      );
+
+      // Process cells in this page
+      if (result.cells && Array.isArray(result.cells)) {
+        for (const cell of result.cells) {
+          if (cell.cellOutput.type && cell.outputData) {
+            // Parse the points from the cell data (16-byte uint128 in little endian)
+            const points = hexToPoints(cell.outputData);
+            totalPoints += points;
+          }
+        }
       }
+
+      // Check if there are more pages - if lastCursor is the same as current cursor, we're done
+      if (!result.lastCursor || result.lastCursor === after) {
+        break; // No more pages or same cursor (indicates no new data)
+      }
+
+      after = result.lastCursor;
     }
 
     return totalPoints;
