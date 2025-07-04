@@ -70,20 +70,20 @@ function NavBrand() {
     <div className="flex items-center gap-6">
       <Link
         href="/"
-        className="text-lg font-bold text-gray-800 hover:text-blue-600 transition-colors"
+        className="text-lg font-bold text-gray-800 hover:text-gray-900 transition-colors duration-200"
       >
         Pokemon
       </Link>
       <div className="flex items-center gap-4">
         <Link
           href="/"
-          className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
+          className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors duration-200"
         >
           Shop
         </Link>
         <Link
           href="/my-pokemon"
-          className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
+          className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors duration-200"
         >
           My Pokemon
         </Link>

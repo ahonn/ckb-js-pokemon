@@ -96,19 +96,16 @@ export default function MyPokemon({ signer, client }: MyPokemonProps) {
     <div className="p-6 w-full max-w-none">
       <MyPokemonHeader />
       
-      <div className="mb-4 text-center">
-        <p className="text-gray-600">
-          You own <span className="font-bold text-blue-600">{ownedPokemon.length}</span> Pokemon
-        </p>
-      </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6 px-4">
-        {ownedPokemon.map((pokemon) => (
-          <OwnedPokemonCard
-            key={`${pokemon.cellId?.txHash}-${pokemon.cellId?.index}` || pokemon.id}
-            pokemon={pokemon}
-          />
-        ))}
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
+          {ownedPokemon.map((pokemon) => (
+            <OwnedPokemonCard
+              key={`${pokemon.cellId?.txHash}-${pokemon.cellId?.index}` || pokemon.id}
+              pokemon={pokemon}
+            />
+          ))}
+        </div>
       </div>
       
       {/* Infinite Scroll Loading */}
@@ -124,14 +121,17 @@ export default function MyPokemon({ signer, client }: MyPokemonProps) {
 // Extract header as a separate component for better organization
 function MyPokemonHeader() {
   return (
-    <>
-      <h2 className="text-2xl font-bold mb-4 text-gray-800 text-center">My Pokemon</h2>
-      <p className="text-gray-700 mb-6 text-center font-medium">
-        Your Pokemon NFT collection
+    <div className="text-center mb-8">
+      <h1 className="text-4xl font-bold mb-3 text-gray-900 tracking-tight">
+        My Pokemon Collection
+      </h1>
+      <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+        Discover and manage your unique Pokemon NFT collection
       </p>
-    </>
+    </div>
   );
 }
+
 
 interface InfiniteScrollTriggerProps {
   hasMore: boolean;
@@ -168,11 +168,7 @@ function InfiniteScrollTrigger({ hasMore, loadingMore, onLoadMore }: InfiniteScr
   }, [hasMore, loadingMore, onLoadMore]);
 
   if (!hasMore && !loadingMore) {
-    return (
-      <div className="mt-8 text-center text-gray-500">
-        <p>All your Pokemon are displayed</p>
-      </div>
-    );
+    return null;
   }
 
   return (
