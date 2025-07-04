@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 
-const https = require('https');
-const fs = require('fs');
-const path = require('path');
+import https from 'https';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configuration
 const OUTPUT_FILE = path.join(__dirname, '..', 'pokemon-data.json');
@@ -178,11 +182,11 @@ async function fetchAllPokemonData() {
 }
 
 // Execute if run directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   fetchAllPokemonData().catch((error) => {
     console.error('Script failed:', error.message);
     process.exit(1);
   });
 }
 
-module.exports = { fetchAllPokemonData };
+export { fetchAllPokemonData };

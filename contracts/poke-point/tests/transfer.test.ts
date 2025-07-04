@@ -133,7 +133,7 @@ describe('Transfer Tests', () => {
     verifier.verifySuccess(true);
   });
 
-  test('should fail when input/output amounts do not match', async () => {
+  test('should succeed when consuming PokePoints (input > output)', async () => {
     const tx = Transaction.default();
     deployScripts(tx, context);
     const typeScript = createPokePointTypeScript(1000000000n, context); // 10 CKB per point
@@ -147,11 +147,11 @@ describe('Transfer Tests', () => {
     );
     tx.inputs.push(Resource.createCellInput(inputPokePointCell));
 
-    // Create PokePoint output with different amount (8 points) - should fail
+    // Create PokePoint output with less amount (8 points) - 2 points consumed, should succeed
     addPokePointOutput(tx, typeScript, 8000000000n, 8n, context); // 80 CKB for 8 points
 
     const verifier = Verifier.from(context.resource, tx);
-    await verifier.verifyFailure();
+    verifier.verifySuccess(true);
   });
 
   test('should fail when output has zero amount', async () => {
@@ -233,6 +233,104 @@ describe('Transfer Tests', () => {
 
     // Create PokePoint output with exactly 190 CKB capacity for 19 points
     addPokePointOutput(tx, typeScript, 19000000000n, 19n, context); // 190 CKB for 19 points - exact match
+
+    const verifier = Verifier.from(context.resource, tx);
+    verifier.verifySuccess(true);
+  });
+
+  test('should succeed with multiple inputs and partial consumption (Pokemon purchase scenario)', async () => {
+    const tx = Transaction.default();
+    deployScripts(tx, context);
+    const typeScript = createPokePointTypeScript(1000000000n, context); // 10 CKB per point
+
+    // Create multiple PokePoint cells as inputs (total: 5 + 8 + 7 = 20 points)
+    const inputCell1 = context.resource.mockCell(
+      context.alwaysSuccessScript,
+      typeScript,
+      pointsToBytes(5n),
+      5000000000n, // 50 CKB
+    );
+    const inputCell2 = context.resource.mockCell(
+      context.alwaysSuccessScript,
+      typeScript,
+      pointsToBytes(8n),
+      8000000000n, // 80 CKB
+    );
+    const inputCell3 = context.resource.mockCell(
+      context.alwaysSuccessScript,
+      typeScript,
+      pointsToBytes(7n),
+      7000000000n, // 70 CKB
+    );
+    
+    tx.inputs.push(Resource.createCellInput(inputCell1));
+    tx.inputs.push(Resource.createCellInput(inputCell2));
+    tx.inputs.push(Resource.createCellInput(inputCell3));
+
+    // Create change output with 15 points (5 points consumed for Pokemon purchase)
+    addPokePointOutput(tx, typeScript, 15000000000n, 15n, context); // 150 CKB for 15 points
+
+    const verifier = Verifier.from(context.resource, tx);
+    verifier.verifySuccess(true);
+  });
+
+  test('should succeed with complete consumption (no outputs)', async () => {
+    const tx = Transaction.default();
+    deployScripts(tx, context);
+    const typeScript = createPokePointTypeScript(1000000000n, context); // 10 CKB per point
+
+    // Create existing PokePoint cell as input (10 points)
+    const inputPokePointCell = context.resource.mockCell(
+      context.alwaysSuccessScript,
+      typeScript,
+      pointsToBytes(10n),
+      10000000000n, // 100 CKB
+    );
+    tx.inputs.push(Resource.createCellInput(inputPokePointCell));
+
+    // No PokePoint outputs - all points consumed
+
+    const verifier = Verifier.from(context.resource, tx);
+    verifier.verifySuccess(true);
+  });
+
+  test('should fail when output exceeds input (invalid)', async () => {
+    const tx = Transaction.default();
+    deployScripts(tx, context);
+    const typeScript = createPokePointTypeScript(1000000000n, context); // 10 CKB per point
+
+    // Create existing PokePoint cell as input (5 points)
+    const inputPokePointCell = context.resource.mockCell(
+      context.alwaysSuccessScript,
+      typeScript,
+      pointsToBytes(5n),
+      5000000000n, // 50 CKB
+    );
+    tx.inputs.push(Resource.createCellInput(inputPokePointCell));
+
+    // Create PokePoint output with more points than input (8 points) - should fail
+    addPokePointOutput(tx, typeScript, 8000000000n, 8n, context); // 80 CKB for 8 points
+
+    const verifier = Verifier.from(context.resource, tx);
+    await verifier.verifyFailure();
+  });
+
+  test('should succeed with minimal consumption (1 point used)', async () => {
+    const tx = Transaction.default();
+    deployScripts(tx, context);
+    const typeScript = createPokePointTypeScript(2000000000n, context); // 20 CKB per point
+
+    // Create existing PokePoint cell as input (10 points)
+    const inputPokePointCell = context.resource.mockCell(
+      context.alwaysSuccessScript,
+      typeScript,
+      pointsToBytes(10n),
+      20000000000n, // 200 CKB (10 points × 20 CKB per point)
+    );
+    tx.inputs.push(Resource.createCellInput(inputPokePointCell));
+
+    // Create PokePoint output with 9 points (1 point consumed)
+    addPokePointOutput(tx, typeScript, 18000000000n, 9n, context); // 180 CKB for 9 points
 
     const verifier = Verifier.from(context.resource, tx);
     verifier.verifySuccess(true);

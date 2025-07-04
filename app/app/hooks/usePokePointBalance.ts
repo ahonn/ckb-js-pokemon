@@ -40,7 +40,6 @@ export function usePokePointBalance({
 
       setBalance(Number(points));
     } catch (err) {
-      console.error('Failed to load balance:', err);
       setError(err instanceof Error ? err.message : 'Failed to load balance');
     } finally {
       setLoading(false);

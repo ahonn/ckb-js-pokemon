@@ -1,4 +1,21 @@
+import { ccc } from '@ckb-ccc/connector-react';
 import { Pokemon } from '../hooks/usePokemonData';
+import { 
+  createPokePointTypeScript, 
+  hexToPoints,
+  pointsToHex,
+} from './pokepoint';
+import {
+  POKEMON_TYPE_ID,
+  POKEMON_DEP_GROUP_TX_HASH,
+  CKB_JS_VM_CODE_HASH,
+  CKB_JS_VM_HASH_TYPE,
+  CKB_JS_VM_TX_HASH,
+  POKEPOINT_DEP_GROUP_TX_HASH,
+  CKB_PER_POINT,
+  ISSUER_CONFIG,
+  POKEPOINT_CONFIG,
+} from '../config/contracts';
 
 // Pure functions for Pokemon-related operations
 export function formatPokemonNumber(id: number): string {
@@ -101,4 +118,265 @@ export function generatePokemonImageUrl(pokemon: Pokemon): string {
 
 export function generateFallbackImageUrl(pokemonName: string): string {
   return `https://via.placeholder.com/144x144/f0f0f0/999999?text=${pokemonName}`;
+}
+
+// Pokemon contract related functions
+export function createPokemonTypeScript(issuerLockHash: string, pokePointTypeHash: string): ccc.ScriptLike {
+  // Pokemon type script args: vmArgs(2) + codeHash(32) + hashType(1) + issuerLockHash(32) + pokePointTypeHash(32)
+  // This must match the args structure used in issue-pokemon.js
+  const vmArgs = '0000'; // 2 bytes
+  const pokemonCodeHash = POKEMON_TYPE_ID.slice(2); // 32 bytes, remove 0x prefix
+  const pokemonHashType = '01'; // 1 byte, "type" = 1
+  const issuerHash = issuerLockHash.slice(2); // 32 bytes, remove 0x prefix
+  const pokePointHash = pokePointTypeHash.slice(2); // 32 bytes, remove 0x prefix
+
+  const args = ('0x' + vmArgs + pokemonCodeHash + pokemonHashType + issuerHash + pokePointHash) as `0x${string}`;
+
+  return {
+    codeHash: CKB_JS_VM_CODE_HASH, // Use CKB-JS-VM as the executor
+    hashType: CKB_JS_VM_HASH_TYPE, // CKB-JS-VM hash type
+    args,
+  };
+}
+
+export function addPokemonCellDeps(tx: ccc.Transaction): void {
+  // Add CKB-JS-VM cell dep
+  tx.cellDeps.push(ccc.CellDep.from({
+    outPoint: ccc.OutPoint.from({
+      txHash: CKB_JS_VM_TX_HASH,
+      index: 0n,
+    }),
+    depType: 'code',
+  }));
+
+  // Add Pokemon contract cell dep
+  tx.cellDeps.push(ccc.CellDep.from({
+    outPoint: ccc.OutPoint.from({
+      txHash: POKEMON_DEP_GROUP_TX_HASH,
+      index: 0n,
+    }),
+    depType: 'depGroup',
+  }));
+}
+
+export async function buildPokemonPurchaseTransaction(
+  client: ccc.Client,
+  signer: ccc.Signer,
+  pokemon: Pokemon,
+  pokemonCell: ccc.CellLike,
+): Promise<ccc.Transaction> {
+  
+  const buyerLock = await signer.getRecommendedAddressObj();
+  const lockScript = buyerLock.script;
+  const lockHash = lockScript.hash();
+
+  
+  // Create type scripts
+  const pokePointTypeScript = createPokePointTypeScript({
+    targetLockHash: lockHash,
+    ckbPerPoint: CKB_PER_POINT,
+  });
+
+  // Create Pokemon type script with correct issuer lock hash and PokePoint type ID
+  // Note: Pokemon type script must use the issuer's lock hash, not the buyer's
+  // Note: Use PokePoint TYPE_ID, not the type script hash
+  const pokemonTypeScript = createPokemonTypeScript(ISSUER_CONFIG.LOCK_HASH, POKEPOINT_CONFIG.TYPE_ID);
+
+  // Create transaction
+  const tx = ccc.Transaction.from({
+    version: 0n,
+    cellDeps: [],
+    headerDeps: [],
+    inputs: [],
+    outputs: [],
+    outputsData: [],
+    witnesses: [],
+  });
+
+  // Verify all dependencies exist on the network
+  try {
+    await client.getTransaction(CKB_JS_VM_TX_HASH);
+  } catch {
+    throw new Error(`CKB-JS-VM transaction not found: ${CKB_JS_VM_TX_HASH}`);
+  }
+
+  try {
+    await client.getTransaction(POKEPOINT_DEP_GROUP_TX_HASH);
+  } catch {
+    throw new Error(`PokePoint dep group transaction not found: ${POKEPOINT_DEP_GROUP_TX_HASH}`);
+  }
+
+  try {
+    await client.getTransaction(POKEMON_DEP_GROUP_TX_HASH);
+  } catch {
+    throw new Error(`Pokemon dep group transaction not found: ${POKEMON_DEP_GROUP_TX_HASH}`);
+  }
+
+  // Add standard CKB lock script dependencies
+  // This is required for verifying the lock scripts in the transaction
+  await tx.addCellDepsOfKnownScripts(client, ccc.KnownScript.Secp256k1Blake160);
+  
+  // Add always success script dependency for Pokemon cells
+  await tx.addCellDepsOfKnownScripts(client, ccc.KnownScript.AlwaysSuccess);
+
+  tx.cellDeps.push(ccc.CellDep.from({
+    outPoint: ccc.OutPoint.from({
+      txHash: CKB_JS_VM_TX_HASH,
+      index: 0n,
+    }),
+    depType: 'code',
+  }));
+
+  tx.cellDeps.push(ccc.CellDep.from({
+    outPoint: ccc.OutPoint.from({
+      txHash: POKEPOINT_DEP_GROUP_TX_HASH,
+      index: 0n,
+    }),
+    depType: 'depGroup',
+  }));
+
+  tx.cellDeps.push(ccc.CellDep.from({
+    outPoint: ccc.OutPoint.from({
+      txHash: POKEMON_DEP_GROUP_TX_HASH,
+      index: 0n,
+    }),
+    depType: 'depGroup',
+  }));
+
+  // Find user's PokePoint cells
+  const requiredPoints = BigInt(pokemon.price);
+  let totalPoints = 0n;
+  let after: string | undefined;
+  const pokePointCells: ccc.CellLike[] = [];
+
+  // Find enough PokePoint cells to cover the purchase
+  while (totalPoints < requiredPoints) {
+    const result = await client.findCellsPaged(
+      {
+        script: pokePointTypeScript,
+        scriptType: 'type',
+        scriptSearchMode: 'exact',
+        filter: {
+          script: lockScript,
+        },
+      },
+      'asc',
+      '0x64',
+      after
+    );
+
+    if (!result.cells || result.cells.length === 0) {
+      throw new Error('Insufficient PokePoints for purchase');
+    }
+
+    for (const cell of result.cells) {
+      if (cell.cellOutput.type && cell.outputData) {
+        const points = hexToPoints(cell.outputData);
+        if (points > 0n) {
+          pokePointCells.push(cell);
+          totalPoints += points;
+          if (totalPoints >= requiredPoints) break;
+        }
+      }
+    }
+
+    if (!result.lastCursor || result.lastCursor === after) {
+      break;
+    }
+    after = result.lastCursor;
+  }
+
+  if (totalPoints < requiredPoints) {
+    throw new Error(`Insufficient PokePoints: have ${totalPoints}, need ${requiredPoints}`);
+  }
+
+  // Add buyer's PokePoint inputs first (these will be signed by the buyer)
+  for (const cell of pokePointCells) {
+    const outPoint = 'previousOutput' in cell 
+      ? cell.previousOutput 
+      : 'outPoint' in cell 
+        ? (cell as { outPoint: { txHash: string; index: bigint } }).outPoint
+        : { txHash: '0x', index: 0n };
+    
+    tx.inputs.push(ccc.CellInput.from({
+      previousOutput: ccc.OutPoint.from({
+        txHash: outPoint.txHash,
+        index: outPoint.index,
+      }),
+      since: 0n,
+    }));
+  }
+
+  // Add Pokemon input 
+  // If it uses always success lock, no signature is needed
+  // If it uses buyer's lock, it will be handled by the signer
+  const pokemonOutPoint = 'previousOutput' in pokemonCell 
+    ? pokemonCell.previousOutput 
+    : 'outPoint' in pokemonCell 
+      ? (pokemonCell as { outPoint: { txHash: string; index: bigint } }).outPoint
+      : { txHash: '0x', index: 0n };
+  
+  tx.inputs.push(ccc.CellInput.from({
+    previousOutput: ccc.OutPoint.from({
+      txHash: pokemonOutPoint.txHash,
+      index: pokemonOutPoint.index,
+    }),
+    since: 0n,
+  }));
+
+  // Add Pokemon output (transfer to buyer)
+  tx.outputs.push(ccc.CellOutput.from({
+    capacity: pokemonCell.cellOutput.capacity,
+    lock: lockScript,
+    type: pokemonTypeScript,
+  }));
+  tx.outputsData.push(pokemonCell.outputData! as `0x${string}`);
+
+  // Add PokePoint payment to issuer (required by new contract validation)
+  const paymentCapacity = requiredPoints * CKB_PER_POINT;
+  const paymentData = pointsToHex(requiredPoints);
+  
+  // Create issuer lock script for payment using standard Secp256k1Blake160
+  const issuerLockScript = ccc.Script.from({
+    codeHash: '0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8', // Secp256k1Blake160
+    hashType: 'type',
+    args: ISSUER_CONFIG.LOCK_ARGS, // Issuer's lock args
+  });
+  
+  // Verify the lock script hash matches the expected issuer lock hash
+  const actualLockHash = issuerLockScript.hash();
+  
+  if (actualLockHash !== ISSUER_CONFIG.LOCK_HASH) {
+    throw new Error(`Issuer lock hash mismatch: expected ${ISSUER_CONFIG.LOCK_HASH}, got ${actualLockHash}`);
+  }
+  
+  tx.outputs.push(ccc.CellOutput.from({
+    capacity: paymentCapacity,
+    lock: issuerLockScript,
+    type: pokePointTypeScript,
+  }));
+  tx.outputsData.push(paymentData as `0x${string}`);
+
+  // Add PokePoint change output if there's overpayment
+  const changePoints = totalPoints - requiredPoints;
+  if (changePoints > 0n) {
+    const changeCapacity = changePoints * CKB_PER_POINT;
+    const changeData = pointsToHex(changePoints);
+    
+    tx.outputs.push(ccc.CellOutput.from({
+      capacity: changeCapacity,
+      lock: lockScript,
+      type: pokePointTypeScript,
+    }));
+    tx.outputsData.push(changeData as `0x${string}`);
+  }
+
+  // Complete transaction fee
+  await tx.completeFeeBy(signer, 1000n);
+
+  // No special witness handling needed:
+  // - Always success lock requires no signature
+  // - Buyer's lock will be handled automatically by the signer
+
+  return tx;
 }

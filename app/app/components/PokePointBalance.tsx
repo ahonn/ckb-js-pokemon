@@ -22,8 +22,8 @@ export default function PokePointBalance({ signer, client }: PokePointBalancePro
       const lockScript = addressObjs[0].script;
       const points = await fetchPokePointBalance(client, lockScript);
       setBalance(points);
-    } catch (error) {
-      console.error("Failed to load PokePoint balance:", error);
+    } catch {
+      // Failed to load balance
     } finally {
       setLoading(false);
     }

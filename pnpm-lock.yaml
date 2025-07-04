@@ -83,8 +83,8 @@ importers:
         version: 9.29.0(jiti@2.4.2)
     devDependencies:
       '@ckb-ccc/core':
-        specifier: ~1.8.0
-        version: 1.8.1(typescript@5.7.3)
+        specifier: ^1.9.0
+        version: 1.9.0(typescript@5.7.3)
       '@eslint/js':
         specifier: ^9.0.0
         version: 9.29.0
@@ -129,8 +129,8 @@ importers:
         version: 9.29.0(jiti@2.4.2)
     devDependencies:
       '@ckb-ccc/core':
-        specifier: ~1.8.0
-        version: 1.8.1(typescript@5.7.3)
+        specifier: ^1.9.0
+        version: 1.9.0(typescript@5.7.3)
       '@eslint/js':
         specifier: ^9.0.0
         version: 9.29.0
@@ -343,9 +343,6 @@ packages:
 
   '@ckb-ccc/connector@1.0.18':
     resolution: {integrity: sha512-zo923w2aFUSjepAIKituvsFxRB75NYVNzwLTIqCD1gcE5Pt5Cmg0U+p/4o5OweqKjL2lLLnsL+NDm4YhTwA/dA==}
-
-  '@ckb-ccc/core@1.8.1':
-    resolution: {integrity: sha512-xdiFORZ/qb9Q0cdvppnaF1BHz8KksT342AVdv3pDR+A3IwGk6HAPqRqmX/5VLg3LSf/se9nlJQry1sGdbu/iyA==}
 
   '@ckb-ccc/core@1.9.0':
     resolution: {integrity: sha512-znKLUJ9rTThtkyUKykZXfNM+Pj1GqCrlhYwl3LZ2EZSPQnQLTD6OquWoEaXLQppgGQ3+GYGjl6ZZDJhu796mHA==}
@@ -3746,28 +3743,6 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - debug
-      - encoding
-      - typescript
-      - utf-8-validate
-      - zod
-
-  '@ckb-ccc/core@1.8.1(typescript@5.7.3)':
-    dependencies:
-      '@joyid/ckb': 1.1.2(typescript@5.7.3)
-      '@noble/ciphers': 0.5.3
-      '@noble/curves': 1.9.2
-      '@noble/hashes': 1.8.0
-      abort-controller: 3.0.0
-      bech32: 2.0.0
-      bitcoinjs-message: 2.2.0
-      bs58check: 4.0.0
-      buffer: 6.0.3
-      cross-fetch: 4.1.0
-      ethers: 6.14.4
-      isomorphic-ws: 5.0.0(ws@8.18.2)
-      ws: 8.18.2
-    transitivePeerDependencies:
-      - bufferutil
       - encoding
       - typescript
       - utf-8-validate

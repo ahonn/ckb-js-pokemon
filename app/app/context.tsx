@@ -98,8 +98,7 @@ export function AppProvider({ children }: AppProviderProps) {
             address,
             isConnected: true,
           });
-        } catch (error) {
-          console.error("Failed to get address:", error);
+        } catch {
           setWalletState(prev => ({ ...prev, isConnected: false }));
         }
       } else {

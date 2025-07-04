@@ -5,8 +5,9 @@ import { ccc } from "@ckb-ccc/connector-react";
 import { useApp } from "../context";
 import {
   CKB_PER_POINT,
-  MIN_CELL_CAPACITY,
   MIN_POINTS_FOR_CELL,
+} from "../config/contracts";
+import {
   createPokePointTypeScript,
   pointsToHex,
   calculatePointsFromCKB,
@@ -43,23 +44,16 @@ export function PokePointExchange({ onSuccess, onClose }: PokePointExchangeProps
 
     try {
       setIsExchanging(true);
-      console.log("Starting exchange process...");
-      console.log("Points to exchange:", points.toString());
-      console.log("Required CKB:", requiredCKB.toString());
       
       // Get user address and lock script using correct API
-      const address = await wallet.signer.getInternalAddress();
       const addressObjs = await wallet.signer.getAddressObjs();
       const lockScript = addressObjs[0].script;
-      console.log("User address:", address);
-      console.log("Lock script:", lockScript);
       
       // Create PokePoint type script
       const pokePointTypeScript = createPokePointTypeScript({
         targetLockHash: lockScript.hash(),
         ckbPerPoint: CKB_PER_POINT,
       });
-      console.log("PokePoint type script:", pokePointTypeScript);
       
       // Build transaction
       const tx = ccc.Transaction.from({
@@ -74,10 +68,6 @@ export function PokePointExchange({ onSuccess, onClose }: PokePointExchangeProps
       // Add PokePoint contract cell dependency
       addPokePointCellDeps(tx);
 
-      // Collect enough CKB inputs - simplified approach
-      const totalNeeded = requiredCKB + MIN_CELL_CAPACITY; // Points capacity + minimum for change
-      console.log("Total CKB needed:", totalNeeded.toString());
-
       // Complete inputs automatically using CCC's built-in methods
       await tx.completeInputsByCapacity(wallet.signer);
 
@@ -91,11 +81,9 @@ export function PokePointExchange({ onSuccess, onClose }: PokePointExchangeProps
 
       // Complete fee
       await tx.completeFeeBy(wallet.signer);
-      console.log("Transaction prepared:", tx);
 
       // Sign and send transaction
       const txHash = await wallet.signer.sendTransaction(tx);
-      console.log("Transaction hash:", txHash);
       
       sendMessage("info", "Transaction Submitted", [
         `Exchange transaction submitted: ${ckbAmount} CKB → ${points} PokePoints`,
@@ -117,7 +105,6 @@ export function PokePointExchange({ onSuccess, onClose }: PokePointExchangeProps
         }, 30000); // Wait 30 seconds for transaction confirmation
       }
     } catch (error) {
-      console.error("Exchange error:", error);
       sendMessage("error", "Exchange Failed", [
         error instanceof Error ? error.message : String(error),
       ]);

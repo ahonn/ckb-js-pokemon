@@ -2,19 +2,19 @@
   "cell_recipes": [
     {
       "name": "poke_point",
-      "tx_hash": "0x6c056e70b0b93474615233f97d027e8e231c7156eb997bc9b9daa9e14dac9100",
+      "tx_hash": "0xf84ed30d1269c46e02c57c34360a164bcb5177f7eb2d438f750b070a80494099",
       "index": 0,
       "occupied_capacity": 3208000000000,
       "data_hash": "0xed9f0e8cf2c49d9e5101dc0c3f1dfe5b601c6beb594733d88b367806de18198b",
-      "type_id": "0xee71850b11443115045505c2b30499e1744482438c726c21b483a6e11c40b1d6"
+      "type_id": "0xea20fed487aa51a17d92ad9b0cb5bdf34a20c7809554247d678053a7cfb1c159"
     }
   ],
   "dep_group_recipes": [
     {
       "name": "poke_point_dep_group",
-      "tx_hash": "0x8060221d8601996c84a0173e5aeb0d8ff462fc31bb806136e70c7edb8588f8b5",
+      "tx_hash": "0xdbb783a7e9c04d3afd920e53bf19f1c5d77940e02bfb46359c2d24a71d46dfc6",
       "index": 0,
-      "data_hash": "0x5d68b79e372079f36aa7299d8c3435e174ea8982bf18907d18bbfb0ba418642c",
+      "data_hash": "0xa51a8e0f67f8b862773b471bd87446d7325f70e5c4161b9d30ef2bd97c0a0c76",
       "occupied_capacity": 10100000000
     }
   ]

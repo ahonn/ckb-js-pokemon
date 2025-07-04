@@ -1,6 +1,6 @@
 import * as bindings from '@ckb-js-std/bindings';
 import { log, HighLevel, numFromBytes } from '@ckb-js-std/core';
-import { loadPokemonData, loadPokePointTypeHash, ensureOnlyOne } from './utils';
+import { loadPokemonData, loadPokePointTypeHash, loadIssuerLockHash, ensureOnlyOne } from './utils';
 
 export function validatePurchaseTransaction(): number {
   log.debug('Validating purchase transaction');
@@ -44,18 +44,18 @@ export function validatePurchaseTransaction(): number {
     return 1;
   }
 
-  // Validate the consumption: input points >= required points + output points (change)
-  // This allows overpayment where extra points are burned
-  if (inputPokePoints < requiredPoints + outputPokePoints) {
-    log.debug(
-      `Invalid PokePoint consumption: input(${inputPokePoints}) < required(${requiredPoints}) + output(${outputPokePoints})`,
-    );
-    return 1;
-  }
+  // For purchase validation, we don't use this old logic anymore
+  // The new validation below will check that the issuer receives the required payment
 
   // Validate PokePoint type script hash matches contract args
   if (!validatePokePointTypeScript()) {
     log.debug('Invalid PokePoint type script hash');
+    return 1;
+  }
+
+  // Validate that the required PokePoints are sent to the issuer
+  if (!validateIssuerPayment(requiredPoints)) {
+    log.debug('Required PokePoints not sent to issuer');
     return 1;
   }
 
@@ -150,4 +150,61 @@ function areHashesEqual(hash1: Uint8Array, hash2: Uint8Array): boolean {
   }
 
   return true;
+}
+
+/**
+ * Validate that the required PokePoints are sent to the issuer
+ */
+function validateIssuerPayment(requiredPoints: bigint): boolean {
+  const expectedIssuerLockHash = loadIssuerLockHash();
+  const expectedPokePointTypeHash = loadPokePointTypeHash();
+  
+  log.debug(`Expected issuer lock hash length: ${expectedIssuerLockHash.length}`);
+  log.debug(`Required payment to issuer: ${requiredPoints} points`);
+  
+  let issuerPayment = 0n;
+  let index = 0;
+
+  // Check all outputs for PokePoint cells sent to the issuer
+  while (true) {
+    try {
+      // Load output cell lock hash
+      const actualLockHash = HighLevel.loadCellLockHash(index, bindings.SOURCE_OUTPUT);
+      if (actualLockHash) {
+        const actualLockHashArray = new Uint8Array(actualLockHash);
+        
+        // Check if this output is sent to the issuer
+        if (areHashesEqual(expectedIssuerLockHash, actualLockHashArray)) {
+          // Check if this is a PokePoint cell
+          const actualTypeHash = HighLevel.loadCellTypeHash(index, bindings.SOURCE_OUTPUT);
+          if (actualTypeHash) {
+            const actualTypeHashArray = new Uint8Array(actualTypeHash);
+            
+            if (areHashesEqual(expectedPokePointTypeHash, actualTypeHashArray)) {
+              // This is a PokePoint cell sent to the issuer
+              const pokePointData = bindings.loadCellData(index, bindings.SOURCE_OUTPUT);
+              if (pokePointData.byteLength === 16) {
+                const points = numFromBytes(pokePointData);
+                issuerPayment += points;
+                log.debug(`Found issuer payment at output ${index}: ${points} points`);
+              }
+            }
+          }
+        }
+      }
+      index++;
+    } catch (error: any) {
+      if (error.errorCode === bindings.INDEX_OUT_OF_BOUND) {
+        break;
+      } else {
+        index++;
+        if (index > 100) break; // Safety limit
+      }
+    }
+  }
+
+  log.debug(`Total issuer payment: ${issuerPayment}, required: ${requiredPoints}`);
+  
+  // Validate that the issuer receives exactly the required payment
+  return issuerPayment >= requiredPoints;
 }

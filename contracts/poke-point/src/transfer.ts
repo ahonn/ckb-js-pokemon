@@ -1,5 +1,5 @@
 import * as bindings from '@ckb-js-std/bindings';
-import { log } from '@ckb-js-std/core';
+import { log, HighLevel } from '@ckb-js-std/core';
 import { loadPokePointAmount, loadCkbPerPoint, calculateTotalAmount } from './utils';
 
 export function validateTransferTransaction(): number {
@@ -11,10 +11,18 @@ export function validateTransferTransaction(): number {
 
   log.debug(`Input total: ${inputTotal}, Output total: ${outputTotal}`);
 
-  // Validate conservation of PokePoints
-  if (inputTotal !== outputTotal) {
-    log.debug('PokePoint amounts do not match: input !== output');
+  // Allow PokePoint consumption (burning) in transactions
+  // This enables Pokemon purchases and other use cases where PokePoints are spent
+  if (inputTotal < outputTotal) {
+    log.debug('Invalid: output cannot exceed input');
     return 1;
+  }
+
+  // Allow input >= output (difference can be consumed/burned)
+  log.debug(`Allowing PokePoint consumption: input(${inputTotal}) >= output(${outputTotal})`);
+  const consumedAmount = inputTotal - outputTotal;
+  if (consumedAmount > 0n) {
+    log.debug(`PokePoints consumed: ${consumedAmount}`);
   }
 
   // Validate all outputs have sufficient capacity
@@ -61,3 +69,4 @@ export function validateTransferTransaction(): number {
   log.debug('Transfer transaction validation successful');
   return 0;
 }
+

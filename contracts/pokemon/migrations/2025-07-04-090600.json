@@ -1,0 +1,21 @@
+{
+  "cell_recipes": [
+    {
+      "name": "pokemon",
+      "tx_hash": "0xcafb1a269832356c720f73912b02d4c5f65c4a993f3c432ee8c9fdc54150cd9a",
+      "index": 0,
+      "occupied_capacity": 3638100000000,
+      "data_hash": "0x84756af5f7cb342497336378e634289d40758578e37846bd980c0b082268ac5f",
+      "type_id": "0xc9cbc70b438403829694f6a49930a261b861c80dd717b0cda24d67f950657d28"
+    }
+  ],
+  "dep_group_recipes": [
+    {
+      "name": "pokemon_dep_group",
+      "tx_hash": "0xd15bac0c378f7ccafff85348f92e8bcee478af765d9370e436bf6d31424fe439",
+      "index": 0,
+      "data_hash": "0x234c49d1be1a8192a5223ee4fe1c9dcf71650a5b37eebbf0b490bc0827a7d472",
+      "occupied_capacity": 10100000000
+    }
+  ]
+}

@@ -15,17 +15,17 @@ const CONFIG = {
   CKB_JS_VM_HASH_TYPE: 'type',
   CKB_JS_VM_TX_HASH: '0x9f6558e91efa7580bfe97830d11cd94ca5d614bbf4a10b36f3a5b9d092749353',
 
-  // Pokemon contract deployment info (updated with burn functionality)
-  POKEMON_CODE_HASH: '0xaba2b6178730a3d543cc95f96f9fc669964e6b90fe100bccfca25db02b8b1caf',
+  // Pokemon contract deployment info (updated with newly deployed contracts) 
+  POKEMON_CODE_HASH: '0xc9cbc70b438403829694f6a49930a261b861c80dd717b0cda24d67f950657d28',
   POKEMON_HASH_TYPE: 1, // "type" = 1
-  POKEMON_TX_HASH: '0x1d3b9a0ed15bb9e6ac87a6f2c13ed25613ab28dab57392b46a2b77d9ccd469c1',
-  POKEMON_DEP_GROUP_TX_HASH: '0x98962ccb7800483c780a86897c072df2f22cd526e701fd9e4465edd674e71464',
+  POKEMON_TX_HASH: '0x6f25b8decdc74594926fd42380d5c811dfc9407e514a8acc34a0a4df5bc16a5a',
+  POKEMON_DEP_GROUP_TX_HASH: '0x278412c1bd763762774c1385d3c103fedcd2086495dfb01e1c030fbfe3c7962b',
 
   // PokePoint type hash (required in Pokemon args)
-  POKEPOINT_TYPE_HASH: '0xee71850b11443115045505c2b30499e1744482438c726c21b483a6e11c40b1d6',
+  POKEPOINT_TYPE_HASH: '0xea20fed487aa51a17d92ad9b0cb5bdf34a20c7809554247d678053a7cfb1c159',
 
   // Issuer lock args (the args from deployment, not the hash)
-  ISSUER_LOCK_ARGS: '0xc13d8e949c0d6874a82ab2976ede9d036aa9a5e0',
+  ISSUER_LOCK_ARGS: '0xa95d7caffda25859a126b4c9adf2b178231b3bd4',
 
   // CKB network configuration (testnet)
   RPC_URL: 'https://testnet.ckb.dev/rpc',
@@ -75,7 +75,7 @@ class PokemonIssuer {
   }
 
   /**
-   * Create Pokemon Type Script Args
+   * Create Pokemon Type Script Args  
    * Args structure: vmArgs(2) + codeHash(32) + hashType(1) + issuerLockHash(32) + pokePointTypeHash(32)
    */
   createPokemonArgs(issuerLockHash) {
@@ -84,7 +84,20 @@ class PokemonIssuer {
     const hashType = ccc.hexFrom(ccc.hashTypeToBytes(CONFIG.POKEMON_HASH_TYPE)).slice(2);
     const issuerHash = issuerLockHash.slice(2);
     const pokePointHash = CONFIG.POKEPOINT_TYPE_HASH.slice(2);
-    return '0x' + vmArgs + codeHash + hashType + issuerHash + pokePointHash;
+    
+    console.log('Pokemon args components:', {
+      vmArgs,
+      codeHash,
+      hashType,
+      issuerHash,
+      pokePointHash,
+    });
+    
+    const fullArgs = '0x' + vmArgs + codeHash + hashType + issuerHash + pokePointHash;
+    console.log('Full Pokemon args:', fullArgs);
+    console.log('Args length:', fullArgs.length, 'bytes:', (fullArgs.length - 2) / 2);
+    
+    return fullArgs;
   }
 
   /**
@@ -140,6 +153,9 @@ class PokemonIssuer {
       }),
     );
 
+    // Add always success script cell deps
+    await tx.addCellDepsOfKnownScripts(this.client, ccc.KnownScript.AlwaysSuccess);
+
     // Get issuer address and lock script
     const issuerAddress = await this.signer.getInternalAddress();
     const addressObjs = await this.signer.getAddressObjs();
@@ -155,21 +171,42 @@ class PokemonIssuer {
 
     // Create Pokemon type script
     const pokemonTypeScript = this.createPokemonTypeScript(issuerLockHash);
+    console.log('Pokemon Type Script:', {
+      codeHash: pokemonTypeScript.codeHash,
+      hashType: pokemonTypeScript.hashType,
+      args: pokemonTypeScript.args,
+    });
 
     // Create Pokemon outputs
     for (let id = pokemonRange.start; id <= pokemonRange.end; id++) {
+      console.log(`Processing Pokemon ID ${id}...`);
       const pokemon = pokemonData.find((p) => p.id === id);
       if (!pokemon) {
         console.warn(`Pokemon with ID ${id} not found in data file, skipping...`);
         continue;
       }
+      console.log(`Found Pokemon: ${pokemon.name}`);
 
-      // Create Pokemon cell output
+      // Create Pokemon cell output with always success lock as requested
+      // This allows Pokemon to be transferred without issuer signature
+      console.log('Getting always success script...');
+      const alwaysSuccessScript = await this.client.getKnownScript(ccc.KnownScript.AlwaysSuccess);
+      console.log('Always success script:', alwaysSuccessScript);
+      
+      // Create the lock script from the ScriptInfo
+      const alwaysSuccessLock = ccc.Script.from({
+        codeHash: alwaysSuccessScript.codeHash,
+        hashType: alwaysSuccessScript.hashType,
+        args: '0x',
+      });
+      
+      console.log('Creating Pokemon cell...');
       const pokemonCell = ccc.CellOutput.from({
         capacity: CONFIG.MIN_CAPACITY,
-        lock: issuerLock,
+        lock: alwaysSuccessLock,
         type: pokemonTypeScript,
       });
+      console.log('Pokemon cell created successfully');
 
       // Encode Pokemon data
       const cellData = this.encodePokemonData(pokemon.id, pokemon.price);

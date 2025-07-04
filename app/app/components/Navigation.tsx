@@ -16,7 +16,11 @@ export function Navigation() {
   const [showExchangeModal, setShowExchangeModal] = useState(false);
 
   // Use the custom hook for balance management
-  const { balance, loading: balanceLoading, refreshBalance } = usePokePointBalance({
+  const {
+    balance,
+    loading: balanceLoading,
+    refreshBalance,
+  } = usePokePointBalance({
     signer: wallet.signer,
     client,
   });
@@ -63,13 +67,27 @@ export function Navigation() {
 // Extract sub-components for better organization and readability
 function NavBrand() {
   return (
-    <div className="flex items-center">
+    <div className="flex items-center gap-6">
       <Link
         href="/"
         className="text-lg font-bold text-gray-800 hover:text-blue-600 transition-colors"
       >
         Pokemon
       </Link>
+      <div className="flex items-center gap-4">
+        <Link
+          href="/"
+          className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
+        >
+          Shop
+        </Link>
+        <Link
+          href="/my-pokemon"
+          className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
+        >
+          My Pokemon
+        </Link>
+      </div>
     </div>
   );
 }
@@ -106,11 +124,7 @@ function NavActions({
 
   return (
     <div className="flex items-center gap-4">
-      <BalanceDisplay
-        balance={balance}
-        loading={balanceLoading}
-        onRecharge={onRecharge}
-      />
+      <BalanceDisplay balance={balance} loading={balanceLoading} onRecharge={onRecharge} />
       <AddressDisplay address={address} />
       <DisconnectButton onDisconnect={onDisconnect} />
     </div>
@@ -148,10 +162,7 @@ interface AddressDisplayProps {
 function AddressDisplay({ address }: AddressDisplayProps) {
   return (
     <div className="border-l border-gray-300 pl-3">
-      <div className="text-xs text-gray-600">Connected</div>
-      <div className="font-mono text-xs text-gray-800">
-        {formatString(address, 6, 4)}
-      </div>
+      <div className="font-bold text-sm text-gray-800">{formatString(address, 6, 4)}</div>
     </div>
   );
 }
@@ -182,11 +193,7 @@ function ExchangeModal({ isOpen, onClose, onSuccess }: ExchangeModalProps) {
   if (!isOpen) return null;
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Recharge PokePoints"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} title="Recharge PokePoints">
       <PokePointExchange onSuccess={onSuccess} onClose={onClose} />
     </Modal>
   );

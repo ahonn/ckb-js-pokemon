@@ -8,13 +8,11 @@ import {
   generateFallbackImageUrl
 } from '../utils/pokemon';
 
-interface PokemonCardProps {
+interface OwnedPokemonCardProps {
   pokemon: Pokemon;
-  onPurchase: (pokemon: Pokemon) => void;
-  purchasing: boolean;
 }
 
-const PokemonCard = React.memo(function PokemonCard({ pokemon, onPurchase, purchasing }: PokemonCardProps) {
+const OwnedPokemonCard = React.memo(function OwnedPokemonCard({ pokemon }: OwnedPokemonCardProps) {
   // Directly compute image URL with memoization - no state needed for initial URL
   const imageUrl = useMemo(() => generatePokemonImageUrl(pokemon), [pokemon]);
   
@@ -69,30 +67,22 @@ const PokemonCard = React.memo(function PokemonCard({ pokemon, onPurchase, purch
         )}
       </div>
 
-      {/* Purchase Section - full width */}
+      {/* Owned Status Section - full width */}
       <div className="flex items-center justify-between bg-white/30 backdrop-blur-sm rounded-lg p-3 border border-white/20">
         <div className="text-left">
-          <div className="text-xs text-gray-700 font-medium">Price</div>
+          <div className="text-xs text-gray-700 font-medium">Original Price</div>
           <span className="font-bold text-xl text-amber-600">{pokemon.price}</span>
           <span className="text-sm text-gray-700 ml-1">PP</span>
         </div>
-        <button
-          onClick={() => onPurchase(pokemon)}
-          disabled={purchasing}
-          className="px-4 py-1.5 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-800 text-xs rounded-full hover:from-yellow-500 hover:to-yellow-600 transition-all duration-200 font-bold shadow-md hover:shadow-lg transform hover:scale-105 border border-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-        >
-          {purchasing ? (
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
-              <span>Buying...</span>
-            </div>
-          ) : (
-            'BUY'
-          )}
-        </button>
+        <div className="px-4 py-1.5 bg-gradient-to-r from-green-400 to-green-500 text-white text-xs rounded-full font-bold shadow-md border border-green-600">
+          <div className="flex items-center gap-2">
+            <span>✓</span>
+            <span>OWNED</span>
+          </div>
+        </div>
       </div>
     </div>
   );
 });
 
-export { PokemonCard };
+export { OwnedPokemonCard };

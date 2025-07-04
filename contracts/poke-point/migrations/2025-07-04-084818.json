@@ -1,0 +1,21 @@
+{
+  "cell_recipes": [
+    {
+      "name": "poke_point",
+      "tx_hash": "0xf0e065cf60bc0dd5029384c58659cc0b638977926771a4e95dd8d8fc5a5b65da",
+      "index": 0,
+      "occupied_capacity": 3223500000000,
+      "data_hash": "0x57eb514ce8c0c50420f4888161b6d0470719b702a790ad4b68aac2b12c0a5f9c",
+      "type_id": "0xea20fed487aa51a17d92ad9b0cb5bdf34a20c7809554247d678053a7cfb1c159"
+    }
+  ],
+  "dep_group_recipes": [
+    {
+      "name": "poke_point_dep_group",
+      "tx_hash": "0xd3af4c612de5f54432b9687c289d78e7208809881efb3207f2d9bc1a0a4f24fb",
+      "index": 0,
+      "data_hash": "0x3927c9c1037628cb92e30006b2f11223b8bdda642e1114d9838b7356cf03f540",
+      "occupied_capacity": 10100000000
+    }
+  ]
+}

@@ -7,39 +7,10 @@ import {
   POKEPOINT_CONFIG,
   ISSUER_CONFIG,
 } from '../config/contracts';
+import { Pokemon } from './usePokemonData';
 
-export interface Pokemon {
-  id: number;
-  name: string;
-  price: number;
-  types: {
-    type: {
-      name: string;
-    };
-  }[];
-  stats?: {
-    base_stat: number;
-    stat: {
-      name: string;
-    };
-  }[];
-  sprites?: {
-    front_default: string | null;
-    other?: {
-      'official-artwork'?: {
-        front_default: string | null;
-      };
-    };
-  };
-  imageUrl?: string | null;
-  cellId?: {
-    txHash: string;
-    index: number;
-  };
-}
-
-interface UsePokemonDataReturn {
-  availablePokemon: Pokemon[];
+interface UseOwnedPokemonReturn {
+  ownedPokemon: Pokemon[];
   loading: boolean;
   loadingMore: boolean;
   error: string | null;
@@ -48,14 +19,15 @@ interface UsePokemonDataReturn {
   refreshPokemon: () => Promise<void>;
 }
 
-interface UsePokemonDataOptions {
+interface UseOwnedPokemonOptions {
   client: ccc.Client;
+  signer: ccc.Signer | null;
   autoLoad?: boolean;
   pageSize?: number;
 }
 
-export function usePokemonData({ client, autoLoad = true, pageSize = 12 }: UsePokemonDataOptions): UsePokemonDataReturn {
-  const [availablePokemon, setAvailablePokemon] = useState<Pokemon[]>([]);
+export function useOwnedPokemon({ client, signer, autoLoad = true, pageSize = 12 }: UseOwnedPokemonOptions): UseOwnedPokemonReturn {
+  const [ownedPokemon, setOwnedPokemon] = useState<Pokemon[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -65,20 +37,27 @@ export function usePokemonData({ client, autoLoad = true, pageSize = 12 }: UsePo
   // Memoize Pokedex instance to prevent recreation on every render
   const pokedex = useMemo(() => new Pokedex(), []);
 
-  const loadPokemonData = useCallback(async (isLoadMore = false) => {
+  const loadOwnedPokemonData = useCallback(async (isLoadMore = false) => {
+    if (!signer) {
+      setLoading(false);
+      setOwnedPokemon([]);
+      setError('No wallet connected');
+      return;
+    }
+
     try {
       if (isLoadMore) {
         setLoadingMore(true);
       } else {
         setLoading(true);
         setError(null);
-        setAvailablePokemon([]);
+        setOwnedPokemon([]);
         setNextCursor(undefined);
         setHasMore(true);
       }
 
-      // Query Pokemon NFTs from blockchain with pagination
-      const result = await queryPokemonCellsPaged(client, pageSize, isLoadMore ? nextCursor : undefined);
+      // Query owned Pokemon NFTs from blockchain with pagination
+      const result = await queryOwnedPokemonCellsPaged(client, signer, pageSize, isLoadMore ? nextCursor : undefined);
 
       // Load detailed Pokemon data from PokeAPI
       const pokemonWithDetails = await Promise.all(
@@ -108,40 +87,47 @@ export function usePokemonData({ client, autoLoad = true, pageSize = 12 }: UsePo
       );
 
       if (isLoadMore) {
-        setAvailablePokemon(prev => [...prev, ...pokemonWithDetails]);
+        setOwnedPokemon(prev => [...prev, ...pokemonWithDetails]);
       } else {
-        setAvailablePokemon(pokemonWithDetails);
+        setOwnedPokemon(pokemonWithDetails);
       }
       
       setNextCursor(result.nextCursor);
       setHasMore(result.hasMore);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to load Pokemon data');
+      setError(error instanceof Error ? error.message : 'Failed to load owned Pokemon data');
     } finally {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [client, pokedex, pageSize, nextCursor]);
+  }, [client, signer, pokedex, pageSize, nextCursor]);
 
   const loadMore = useCallback(() => {
     if (!loadingMore && hasMore) {
-      return loadPokemonData(true);
+      return loadOwnedPokemonData(true);
     }
     return Promise.resolve();
-  }, [loadPokemonData, loadingMore, hasMore]);
+  }, [loadOwnedPokemonData, loadingMore, hasMore]);
 
   useEffect(() => {
     if (autoLoad) {
-      loadPokemonData();
+      loadOwnedPokemonData();
     }
-  }, [autoLoad]); // Remove loadPokemonData from deps to avoid infinite loop
+  }, [autoLoad]); // Remove loadOwnedPokemonData from deps to avoid infinite loop
+
+  // Reload data when signer changes (wallet connects/disconnects)
+  useEffect(() => {
+    if (signer && autoLoad) {
+      loadOwnedPokemonData();
+    }
+  }, [signer]);
 
   const refreshPokemon = useCallback(() => {
-    return loadPokemonData(false);
-  }, [loadPokemonData]);
+    return loadOwnedPokemonData(false);
+  }, [loadOwnedPokemonData]);
 
   return {
-    availablePokemon,
+    ownedPokemon,
     loading,
     loadingMore,
     error,
@@ -160,48 +146,48 @@ const CONFIG = {
   POKEMON_TX_HASH: POKEMON_CONFIG.TX_HASH,
   POKEMON_DEP_GROUP_TX_HASH: POKEMON_CONFIG.DEP_GROUP_TX_HASH,
   POKEPOINT_TYPE_HASH: POKEPOINT_CONFIG.TYPE_ID,
-  ISSUER_LOCK_ARGS: ISSUER_CONFIG.LOCK_ARGS,
-  ISSUER_LOCK_HASH: ISSUER_CONFIG.LOCK_HASH,
-  ISSUER_ADDRESS: ISSUER_CONFIG.TESTNET_ADDRESS,
+  ISSUER_CONFIG,
 };
 
-interface QueryPokemonCellsResult {
+interface QueryOwnedPokemonCellsResult {
   pokemon: Pokemon[];
   nextCursor?: string;
   hasMore: boolean;
 }
 
-async function queryPokemonCellsPaged(client: ccc.Client, limit: number, after?: string): Promise<QueryPokemonCellsResult> {
+async function queryOwnedPokemonCellsPaged(client: ccc.Client, signer: ccc.Signer, limit: number, after?: string): Promise<QueryOwnedPokemonCellsResult> {
   try {
-    // Create Pokemon type script
+    // Create Pokemon type script for filtering
     const pokemonTypeScript = ccc.Script.from({
       codeHash: CONFIG.CKB_JS_VM_CODE_HASH,
       hashType: CONFIG.CKB_JS_VM_HASH_TYPE,
       args: createPokemonArgsForIssuer(),
     });
 
-    // Get Always Success script info from CCC
-    const alwaysSuccessScript = await client.getKnownScript(ccc.KnownScript.AlwaysSuccess);
+    // Get user's lock script
+    const userLockScript = await signer.getAddressObjs().then(objs => objs[0].script);
 
-    // Use findCellsPaged for efficient blockchain pagination - first get all Pokemon cells by type
-    const typeSearchKey = {
-      script: pokemonTypeScript,
-      scriptType: 'type' as const,
+
+    // Query cells by user's lock script instead of Pokemon type script
+    const lockSearchKey = {
+      script: userLockScript,
+      scriptType: 'lock' as const,
       scriptSearchMode: 'exact' as const,
     };
 
-    const result = await client.findCellsPaged(typeSearchKey, 'asc', limit, after);
+    const result = await client.findCellsPaged(lockSearchKey, 'asc', 100, after);
+    
     
     const pokemon: Pokemon[] = [];
     
     for (const cell of result.cells) {
-      // Check if Pokemon is available for purchase using CCC's built-in Always Success script
-      // Pokemon issued with Always Success Lock are available for purchase
-      const isAlwaysSuccess = cell.cellOutput.lock.codeHash === alwaysSuccessScript.codeHash && 
-                              cell.cellOutput.lock.hashType === alwaysSuccessScript.hashType && 
-                              cell.cellOutput.lock.args === '0x';
-      
-      if (isAlwaysSuccess) {
+      // Check if this cell has a Pokemon type script
+      if (cell.cellOutput.type && 
+          cell.cellOutput.type.codeHash === pokemonTypeScript.codeHash &&
+          cell.cellOutput.type.hashType === pokemonTypeScript.hashType &&
+          cell.cellOutput.type.args === pokemonTypeScript.args) {
+        
+        
         // Decode Pokemon data from cell
         const pokemonData = decodePokemonData(cell.outputData);
         if (pokemonData) {
@@ -215,12 +201,14 @@ async function queryPokemonCellsPaged(client: ccc.Client, limit: number, after?:
       }
     }
 
+
     return {
       pokemon,
       nextCursor: result.lastCursor,
       hasMore: result.cells.length === limit, // If we got exactly the limit, there might be more
     };
-  } catch {
+  } catch (error) {
+    console.error('Error querying owned Pokemon:', error);
     return {
       pokemon: [],
       nextCursor: undefined,
@@ -239,7 +227,7 @@ function createPokemonArgs(issuerLockHash: string): string {
 }
 
 function createPokemonArgsForIssuer(): string {
-  return createPokemonArgs(CONFIG.ISSUER_LOCK_HASH);
+  return createPokemonArgs(CONFIG.ISSUER_CONFIG.LOCK_HASH);
 }
 
 function decodePokemonData(data: string): Pokemon | null {

@@ -60,8 +60,16 @@ describe('Pokemon Purchase Transaction Tests', () => {
     tx.outputs.push(buyerPokemonCell);
     tx.outputsData.push(pokemonDataToBytes(pokemonId, pokemonPrice));
 
-    // No PokePoint output - all points are burned for the purchase
-    addChangeOutput(tx, 15000000000n, context); // Increased change to account for no PokePoint output
+    // Add PokePoint payment to issuer (required by new validation logic)
+    const issuerPaymentCell = Resource.createCellOutput(
+      context.alwaysSuccessScript, // Issuer uses the same lock script
+      buyerPokePointTypeScript,
+      100000000000n, // 100 points * 1000000000 (CKB_PER_POINT)
+    );
+    tx.outputs.push(issuerPaymentCell);
+    tx.outputsData.push(pointsToBytes(100n)); // Exact payment amount
+
+    addChangeOutput(tx, 15000000000n, context);
 
     const verifier = Verifier.from(context.resource, tx);
     verifier.verifySuccess(true);
@@ -109,8 +117,16 @@ describe('Pokemon Purchase Transaction Tests', () => {
     tx.outputs.push(buyerPokemonCell);
     tx.outputsData.push(pokemonDataToBytes(pokemonId, pokemonPrice));
 
-    // No PokePoint output - all points are burned (including overpayment)
-    addChangeOutput(tx, 20000000000n, context); // Increased change to account for no PokePoint output
+    // Add PokePoint payment to issuer (required by new validation logic)
+    const issuerPaymentCell = Resource.createCellOutput(
+      context.alwaysSuccessScript, // Issuer uses the same lock script
+      buyerPokePointTypeScript,
+      100000000000n, // 100 points * 1000000000 (CKB_PER_POINT)
+    );
+    tx.outputs.push(issuerPaymentCell);
+    tx.outputsData.push(pointsToBytes(100n)); // Exact payment amount (overpayment is burned)
+
+    addChangeOutput(tx, 20000000000n, context);
 
     const verifier = Verifier.from(context.resource, tx);
     verifier.verifySuccess(true);
@@ -216,6 +232,57 @@ describe('Pokemon Purchase Transaction Tests', () => {
     verifier.verifySuccess(true);
   });
 
+  test('should fail when payment is not sent to issuer', async () => {
+    const tx = Transaction.default();
+    deployScripts(tx, context);
+
+    const issuerLockHash = context.alwaysSuccessScript.hash();
+
+    // Create a real PokePoint type script using the deployed poke-point contract
+    const buyerPokePointTypeScript = createRealPokePointTypeScript(context);
+    const pokePointTypeHash = buyerPokePointTypeScript.hash();
+
+    const typeScript = createPokemonTypeScript(issuerLockHash, pokePointTypeHash, context);
+
+    const pokemonId = 1n; // Bulbasaur
+    const pokemonPrice = 100;
+
+    const existingPokemonCell = context.resource.mockCell(
+      context.alwaysSuccessScript,
+      typeScript,
+      pokemonDataToBytes(pokemonId, pokemonPrice),
+      10000000000n,
+    );
+    tx.inputs.push(Resource.createCellInput(existingPokemonCell));
+
+    const buyerPokePointCell = context.resource.mockCell(
+      context.alwaysSuccessScript,
+      buyerPokePointTypeScript,
+      pointsToBytes(100n),
+      10000000000n,
+    );
+    tx.inputs.push(Resource.createCellInput(buyerPokePointCell));
+
+    addInputCell(tx, 5000000000n, context);
+
+    const buyerPokemonCell = Resource.createCellOutput(
+      createBuyerLockScript(context),
+      typeScript,
+      10000000000n,
+    );
+    tx.outputs.push(buyerPokemonCell);
+    tx.outputsData.push(pokemonDataToBytes(pokemonId, pokemonPrice));
+
+    // Don't add payment to issuer - this should cause the test to fail
+    // The PokePoints are effectively burned without payment to issuer
+    
+    addChangeOutput(tx, 15000000000n, context);
+
+    const verifier = Verifier.from(context.resource, tx);
+    // This should fail because required payment not sent to issuer
+    verifier.verifySuccess(false);
+  });
+
   test('should fail when trying to modify Pokemon data during purchase', async () => {
     const tx = Transaction.default();
     deployScripts(tx, context);
@@ -257,6 +324,15 @@ describe('Pokemon Purchase Transaction Tests', () => {
     tx.outputs.push(buyerPokemonCell);
     // Modify Pokemon data during purchase (change pokemonId from 9 to 50, and price from 100 to 50)
     tx.outputsData.push(pokemonDataToBytes(50n, 50));
+
+    // Even with proper issuer payment, this should fail due to data modification
+    const issuerPaymentCell = Resource.createCellOutput(
+      context.alwaysSuccessScript,
+      buyerPokePointTypeScript,
+      100000000000n, // 100 points * 1000000000 (CKB_PER_POINT)
+    );
+    tx.outputs.push(issuerPaymentCell);
+    tx.outputsData.push(pointsToBytes(100n)); // Pay original price
 
     addChangeOutput(tx, 20000000000n, context);
 

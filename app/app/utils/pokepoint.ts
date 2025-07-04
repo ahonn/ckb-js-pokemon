@@ -1,25 +1,13 @@
-import { ccc, HashType } from '@ckb-ccc/connector-react';
-
-// Constants from deployment information (latest deployment with exact capacity validation)
-export const POKEPOINT_TYPE_ID =
-  '0xee71850b11443115045505c2b30499e1744482438c726c21b483a6e11c40b1d6';
-export const POKEPOINT_TX_HASH =
-  '0x6c056e70b0b93474615233f97d027e8e231c7156eb997bc9b9daa9e14dac9100';
-export const POKEPOINT_DEP_GROUP_TX_HASH =
-  '0x8060221d8601996c84a0173e5aeb0d8ff462fc31bb806136e70c7edb8588f8b5';
-
-// CKB-JS-VM Constants (testnet deployment)
-export const CKB_JS_VM_CODE_HASH =
-  '0x3e9b6bead927bef62fcb56f0c79f4fbd1b739f32dd222beac10d346f2918bed7';
-export const CKB_JS_VM_HASH_TYPE: HashType = 'type';
-export const CKB_JS_VM_TX_HASH =
-  '0x9f6558e91efa7580bfe97830d11cd94ca5d614bbf4a10b36f3a5b9d092749353';
-
-// Contract configuration
-export const CKB_PER_POINT = 1000000000n; // 10 CKB in Shannon
-export const MIN_CELL_CAPACITY = 6100000000n; // 61 CKB minimum
-export const POKEPOINT_CELL_MIN_CAPACITY = 20000000000n; // 200 CKB minimum for PokePoint cell
-export const MIN_POINTS_FOR_CELL = 20n; // Minimum 20 points to satisfy minimum capacity
+import { ccc } from '@ckb-ccc/connector-react';
+import {
+  POKEPOINT_TYPE_ID,
+  POKEPOINT_DEP_GROUP_TX_HASH,
+  CKB_JS_VM_CODE_HASH,
+  CKB_JS_VM_HASH_TYPE,
+  CKB_JS_VM_TX_HASH,
+  CKB_PER_POINT,
+  MIN_POINTS_FOR_CELL,
+} from '../config/contracts';
 
 export interface PokePointTypeScriptConfig {
   targetLockHash: string;
@@ -175,8 +163,7 @@ export async function fetchPokePointBalance(
     }
 
     return totalPoints;
-  } catch (error) {
-    console.error('Error fetching PokePoint balance:', error);
+  } catch {
     return 0n;
   }
 }
