@@ -46,7 +46,9 @@ export default function MyPokemon({ signer, client }: MyPokemonProps) {
     return (
       <div className="p-6 w-full max-w-none">
         <MyPokemonHeader />
-        <LoadingGrid />
+        <div className="max-w-7xl mx-auto">
+          <LoadingGrid className="gap-8 no-padding" />
+        </div>
       </div>
     );
   }
