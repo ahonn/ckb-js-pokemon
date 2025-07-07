@@ -1,29 +1,64 @@
 # CKB-JS Pokemon
 
-A blockchain-based Pokemon NFT gaming application built on the CKB (Nervos Network) blockchain.
+A blockchain-based Pokemon NFT collection platform built on the CKB (Nervos Network) blockchain using CKB-JS-VM smart contracts.
 
-## Pokemon Pricing
+## 🎴 Overview
 
-Pokemon prices are calculated based on their total base stats (HP + Attack + Defense + Special Attack + Special Defense + Speed):
+This project implements a Pokemon NFT collection platform where users can:
+- Purchase Pokemon NFTs using PokePoints (custom token system)
+- Build their Pokemon collection with varying rarities and prices
+- Manage their Pokemon collection through a modern React web interface
 
-| Tier | Base Stats | Price | Examples |
-|------|------------|-------|----------|
-| Legendary | > 600 | 5000 PokePoints | Mewtwo, Lugia, Ho-Oh |
-| High | 501-600 | 3000 PokePoints | Venusaur, Charizard, Blastoise |
-| Mid | 401-500 | 2000 PokePoints | Ivysaur, Charmeleon, Wartortle |
-| Low-Mid | 301-400 | 1500 PokePoints | Bulbasaur, Charmander, Squirtle |
-| Base | ≤ 300 | 1000 PokePoints | Caterpie, Weedle, Magikarp |
+## 🏗️ Project Components
 
-## Getting Started
+- **[Frontend App](app/README.md)**: Next.js application with React components and CKB wallet integration
+- **[PokePoint Contract](contracts/poke-point/README.md)**: Custom token contract for platform currency (10 CKB = 1 PokePoint)
+- **[Pokemon Contract](contracts/pokemon/README.md)**: NFT contract for Pokemon collectibles with integrated pricing
 
-Build on-chain script:
-
-```bash
-pnpm build
-```
-
-Test on-chain script:
+## 🚀 Quick Start
 
 ```bash
-pnpm test
+# Install dependencies
+pnpm install
+
+# Build smart contracts
+pnpm build:contracts
+
+# Start frontend development server
+pnpm dev
 ```
+
+**Requirements**: Node.js 18+, pnpm
+**Development Server**: `http://localhost:3000`
+
+## 🔧 Development Commands
+
+```bash
+# Frontend
+pnpm dev                    # Start development server
+pnpm build                  # Build for production
+pnpm lint                   # Run linting
+
+# Smart Contracts
+pnpm build:contracts        # Build all contracts
+pnpm test:contracts         # Run contract tests
+pnpm clean:contracts        # Clean contract builds
+
+# Utilities
+pnpm issue-pokemon          # Issue Pokemon NFTs (requires deployed contracts)
+```
+
+## 📚 Documentation
+
+- **[Deployment Guide](DEPLOYMENT.md)**: Complete smart contract deployment instructions
+- **[Frontend App](app/README.md)**: React/Next.js application details
+- **[PokePoint Contract](contracts/poke-point/README.md)**: Token contract implementation
+- **[Pokemon Contract](contracts/pokemon/README.md)**: NFT contract implementation
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+Built with ❤️ on the CKB blockchain

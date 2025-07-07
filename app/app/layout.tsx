@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CKB Pokemon NFT Game",
-  description: "Pokemon NFT game on CKB blockchain with PokePoints and cell management",
+  title: "CKB Pokemon NFT Collection",
+  description: "Pokemon NFT collection platform on CKB blockchain with PokePoints and smart contracts",
 };
 
 export default function RootLayout({
